@@ -136,8 +136,7 @@ table .column-filters {
 
 .table thead .column-filters td,
 .table thead .column-filters th {
-  padding-top: var(--cdk-size-8);
-  padding-bottom: var(--cdk-size-8);
+  padding-block: var(--#{$cdk}size-8);
 }
 
 .grid {
@@ -367,7 +366,7 @@ table {
       }
 
       td, th {
-        padding: .2rem;
+        padding: var(--#{$cdk}size-4);
       }
 
       td {

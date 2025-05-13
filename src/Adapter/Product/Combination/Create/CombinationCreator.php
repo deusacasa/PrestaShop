@@ -113,7 +113,7 @@ class CombinationCreator
         AttributeGroupRepository $attributeGroupRepository,
         AttributeRepository $attributeRepository,
         DefaultCombinationUpdater $defaultCombinationUpdater,
-        HookDispatcherInterface $hookDispatcher,
+        HookDispatcherInterface $hookDispatcher
     ) {
         $this->combinationGenerator = $combinationGenerator;
         $this->combinationRepository = $combinationRepository;

@@ -59,7 +59,7 @@ describe('FO - Newsletter : Subscribe to Newsletter', async () => {
     });
 
     it('should subscribe to newsletter', async function () {
-      await testContext.addContextItem(this, 'testIdentifier', 'subscribeToNewsletter', baseContext);
+      await testContext.addContextItem(this, 'testIdentifier', 'subscribeToNewsletterForJohnDoe', baseContext);
 
       const newsletterSubscribeAlertMessage = await foClassicHomePage.subscribeToNewsletter(page, dataCustomers.johnDoe.email);
       expect(newsletterSubscribeAlertMessage).to.contains(foClassicHomePage.successSubscriptionMessage);

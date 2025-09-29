@@ -61,9 +61,12 @@ final class PDFGenerator implements PDFGeneratorInterface
     /**
      * {@inheritdoc}
      */
-    public function generatePDF(array $objectCollection, bool $display = true)
+    public function generatePDF(array $objectCollection, $display = true, $filename = null)
     {
         $pdf = new PDF($objectCollection, $this->templateTypeProvider->getPDFTemplateType(), $this->smarty);
+        if (null !== $filename) {
+            $pdf->filename = $filename;
+        }
         $pdf->render($display);
     }
 }

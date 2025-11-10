@@ -2454,7 +2454,7 @@ class AdminTranslationsControllerCore extends AdminController
             }
         }
 
-        if (!empty($arr_modules)){
+        if (!empty($arr_modules)) {
             ksort($arr_modules);
         }
 

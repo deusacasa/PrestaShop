@@ -124,7 +124,18 @@ class ModulesDoctrineCompilerPass implements CompilerPassInterface
         foreach ($finder as $phpFile) {
             $phpContent = file_get_contents($phpFile->getRealPath());
             if (preg_match('~namespace[ \t]+(.+)[ \t]*;~Um', $phpContent, $matches)) {
-                return $matches[1];
+                $namespace = trim($matches[1]);
+                if ($namespace === '') {
+                    continue;
+                }
+
+                $pos = strpos($namespace, '\\Entity');
+                if ($pos !== false) {
+                    return substr($namespace, 0, $pos + strlen('\\Entity'));
+                }
+
+                // Fallback: if for some reason there's no '\Entity', I'll use what was found anyway
+                return $namespace;
             }
         }
 

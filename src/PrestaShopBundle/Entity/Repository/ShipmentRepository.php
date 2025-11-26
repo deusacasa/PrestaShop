@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -38,12 +39,9 @@ class ShipmentRepository extends EntityRepository
     /**
      * @var string
      */
-    private $tablePrefix;
+    public $tablePrefix;
 
-    /**
-     * @param string $tablePrefix
-     */
-    public function __construct(string $tablePrefix)
+    public function setTablePrefix(string $tablePrefix): void
     {
         $this->tablePrefix = $tablePrefix;
     }

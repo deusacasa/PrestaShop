@@ -73,7 +73,6 @@ class OrderShipmentCreator
             $orderCarrier->shipping_cost_tax_excl = (float) $products['total_shipping_tax_excl'];
             $orderCarrier->shipping_cost_tax_incl = (float) $products['total_shipping_tax_incl'];
             $orderCarrier->add();
-
             // match products with order details to get quantities & orderDetailId
             foreach (OrderDetail::getList($order->id) as $orderDetailProduct) {
                 foreach ($products['product_list'] as $product) {
@@ -97,12 +96,14 @@ class OrderShipmentCreator
     /**
      * @param array{
      *     id_customization: int,
+     *     id_product_attribute: int,
      *     id_product: int
      * } $product
      * @param array{
      *     id_customization: int,
      *     id_order_detail: int,
      *     product_id: int,
+     *     product_attribute_id: int,
      *     product_quantity: int
      * } $orderDetailProduct
      *
@@ -112,6 +113,10 @@ class OrderShipmentCreator
     {
         if (!empty($product['id_customization'])) {
             return $product['id_customization'] === $orderDetailProduct['id_customization'];
+        }
+
+        if (!empty($product['id_product_attribute'])) {
+            return $product['id_product_attribute'] === $orderDetailProduct['product_attribute_id'];
         }
 
         return $product['id_product'] === $orderDetailProduct['product_id'];

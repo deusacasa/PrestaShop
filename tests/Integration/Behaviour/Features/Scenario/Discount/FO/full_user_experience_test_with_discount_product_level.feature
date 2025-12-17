@@ -27,7 +27,7 @@ Feature: Full UX discount test
       | valid_to          | 2026-12-01 00:00:00 |
       | code              | PROMO_CART_2025_2   |
       | reduction_percent | 50.0                |
-      | reduction_product | -1                  |
+      | reduction_product | cheapest_product    |
     And discount "complete_percent_product_level_discount" should have the following properties:
       | name[en-US]       | Promotion           |
       | name[fr-FR]       | Promotion_fr        |
@@ -36,7 +36,7 @@ Feature: Full UX discount test
       | valid_to          | 2026-12-01 00:00:00 |
       | code              | PROMO_CART_2025_2   |
       | reduction_percent | 50.0                |
-      | reduction_product | -1                  |
+      | reduction_product | cheapest_product    |
     And I add 1 product "product1" to the cart "dummy_cart"
     And I add 1 product "product2" to the cart "dummy_cart"
     And cart "dummy_cart" total with tax included should be '$46.81'

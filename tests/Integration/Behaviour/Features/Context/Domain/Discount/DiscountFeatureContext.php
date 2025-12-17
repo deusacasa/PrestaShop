@@ -212,10 +212,11 @@ class DiscountFeatureContext extends AbstractDomainFeatureContext
             $command->setCustomerId($this->getSharedStorage()->get($data['customer']));
         }
 
-        if ($command->getDiscountType()->getValue() === DiscountType::CART_LEVEL
-            || $command->getDiscountType()->getValue() === DiscountType::PRODUCT_LEVEL
-            || $command->getDiscountType()->getValue() === DiscountType::ORDER_LEVEL
-        ) {
+        if (in_array($command->getDiscountType()->getValue(), [
+            DiscountType::CART_LEVEL,
+            DiscountType::PRODUCT_LEVEL,
+            DiscountType::ORDER_LEVEL,
+        ])) {
             if (!empty($data['reduction_percent'])) {
                 $command->setPercentDiscount(new DecimalNumber($data['reduction_percent']));
             }
@@ -235,8 +236,10 @@ class DiscountFeatureContext extends AbstractDomainFeatureContext
 
         if ($command->getDiscountType()->getValue() === DiscountType::PRODUCT_LEVEL) {
             if (!empty($data['reduction_product'])) {
-                if ((int) $data['reduction_product'] === -1 || (int) $data['reduction_product'] === -2) {
-                    $command->setReductionProduct((int) $data['reduction_product']);
+                if ($data['reduction_product'] === 'cheapest_product') {
+                    $command->setReductionProduct(DiscountSettings::CHEAPEST_PRODUCT);
+                } elseif ($data['reduction_product'] === 'product_segment') {
+                    $command->setReductionProduct(DiscountSettings::PRODUCT_SEGMENT);
                 } else {
                     $command->setReductionProduct($this->getSharedStorage()->get($data['reduction_product']));
                 }
@@ -540,8 +543,10 @@ class DiscountFeatureContext extends AbstractDomainFeatureContext
             Assert::assertSame($expectedData['type'], $discountForEditing->getType()->getValue(), 'Unexpected type');
         }
         if (isset($expectedData['reduction_product'])) {
-            if ((int) $expectedData['reduction_product'] === -1 || (int) $expectedData['reduction_product'] === -2) {
-                Assert::assertSame((int) $expectedData['reduction_product'], $discountForEditing->getReductionProduct());
+            if ($expectedData['reduction_product'] === 'cheapest_product') {
+                Assert::assertSame(DiscountSettings::CHEAPEST_PRODUCT, $discountForEditing->getReductionProduct());
+            } elseif ($expectedData['reduction_product'] === 'product_segment') {
+                Assert::assertSame(DiscountSettings::PRODUCT_SEGMENT, $discountForEditing->getReductionProduct());
             } else {
                 Assert::assertSame($this->getSharedStorage()->get($expectedData['reduction_product']), $discountForEditing->getReductionProduct());
             }

@@ -29,9 +29,11 @@ namespace PrestaShop\PrestaShop\Adapter\Discount\Update;
 use CartRule;
 use Doctrine\DBAL\Connection;
 use PrestaShop\PrestaShop\Adapter\Discount\Repository\DiscountRepository;
+use PrestaShop\PrestaShop\Core\Domain\Discount\DiscountSettings;
 use PrestaShop\PrestaShop\Core\Domain\Discount\Exception\CannotUpdateDiscountException;
 use PrestaShop\PrestaShop\Core\Domain\Discount\ProductRuleGroup;
 use PrestaShop\PrestaShop\Core\Domain\Discount\ValueObject\DiscountId;
+use PrestaShop\PrestaShop\Core\Domain\Discount\ValueObject\DiscountType;
 use PrestaShop\PrestaShop\Core\Domain\ValueObject\Money;
 
 class DiscountConditionsUpdater
@@ -129,8 +131,6 @@ class DiscountConditionsUpdater
         CartRule $discount,
         array $productRuleGroups,
     ): array {
-        $this->cleanDiscountProductRules($discount);
-
         foreach ($productRuleGroups as $productRuleGroup) {
             // First create group
             $this->connection->createQueryBuilder()
@@ -185,7 +185,16 @@ class DiscountConditionsUpdater
         }
         $discount->product_restriction = !empty($productRuleGroups);
 
-        return ['product_restriction'];
+        $updatedProperties = ['product_restriction'];
+
+        // Product level now uses a condition on a segment of product, we need to update the
+        // reduction_product property with the specific value
+        if ($discount->getType() === DiscountType::PRODUCT_LEVEL) {
+            $discount->reduction_product = DiscountSettings::PRODUCT_SEGMENT;
+            $updatedProperties[] = 'reduction_product';
+        }
+
+        return $updatedProperties;
     }
 
     private function applyCarrierConditions(CartRule $discount, array $carrierIds): array
@@ -279,7 +288,15 @@ class DiscountConditionsUpdater
             WHERE pr.id_product_rule = NULL
         ');
 
-        return ['product_restriction'];
+        $updatedProperties = ['product_restriction'];
+
+        if ($discount->getType() === DiscountType::PRODUCT_LEVEL) {
+            // No more segment, no more target
+            $discount->reduction_product = 0;
+            $updatedProperties[] = 'reduction_product';
+        }
+
+        return $updatedProperties;
     }
 
     private function cleanDiscountCarriers(CartRule $discount): array

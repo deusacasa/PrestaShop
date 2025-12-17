@@ -30,6 +30,7 @@ use CartRule;
 use DateTimeImmutable;
 use PrestaShop\PrestaShop\Adapter\Discount\Repository\DiscountTypeRepository;
 use PrestaShop\PrestaShop\Core\Domain\Discount\Command\AddDiscountCommand;
+use PrestaShop\PrestaShop\Core\Domain\Discount\DiscountSettings;
 use PrestaShop\PrestaShop\Core\Domain\Discount\ValueObject\DiscountType;
 use PrestaShop\PrestaShop\Core\Util\DateTime\DateTime as DateTimeUtil;
 
@@ -63,7 +64,11 @@ class CartRuleBuilder
         $cartRule->id_cart_rule_type = $this->discountTypeRepository->getTypeIdByString($discountType);
         $cartRule->free_shipping = $discountType === DiscountType::FREE_SHIPPING;
 
-        if ($command->getDiscountType()->getValue() === DiscountType::CART_LEVEL || $command->getDiscountType()->getValue() === DiscountType::ORDER_LEVEL || $command->getDiscountType()->getValue() === DiscountType::PRODUCT_LEVEL) {
+        if (in_array($command->getDiscountType()->getValue(), [
+            DiscountType::CART_LEVEL,
+            DiscountType::ORDER_LEVEL,
+            DiscountType::PRODUCT_LEVEL]
+        )) {
             if ($command->getPercentDiscount()) {
                 $cartRule->reduction_percent = (float) (string) $command->getPercentDiscount();
                 $cartRule->reduction_amount = 0;
@@ -81,13 +86,18 @@ class CartRuleBuilder
         }
 
         if ($command->getDiscountType()->getValue() === DiscountType::PRODUCT_LEVEL) {
-            if ($command->getPercentDiscount()) {
-                $cartRule->reduction_percent = (float) (string) $command->getPercentDiscount();
-                $cartRule->reduction_amount = 0;
-                $cartRule->reduction_currency = 0;
-                $cartRule->reduction_tax = false;
+            if ($command->getReductionProduct() > 0) {
+                // Single product selection
+                $cartRule->reduction_product = $command->getReductionProduct();
+            } elseif ($command->getReductionProduct() === DiscountSettings::CHEAPEST_PRODUCT) {
+                // Cheapest product is the target
+                $cartRule->reduction_product = DiscountSettings::CHEAPEST_PRODUCT;
+            } else {
+                // In other case no target is defined, if the discount aims at targetting a product segment
+                // it will be via the UpdateDiscountConditionsCommand which will automatically update this
+                // property
+                $cartRule->reduction_product = 0;
             }
-            $cartRule->reduction_product = $command->getReductionProduct();
         }
 
         return $cartRule;

@@ -94,6 +94,7 @@ final class SupplierQueryBuilder extends AbstractDoctrineQueryBuilder
         $this->searchCriteriaApplicator
             ->applySorting($searchCriteria, $qb)
             ->applyPagination($searchCriteria, $qb)
+            ->applyDeterministicSorting($searchCriteria, $qb, 's', 'id_supplier')
         ;
 
         return $qb;

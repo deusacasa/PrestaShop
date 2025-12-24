@@ -300,6 +300,24 @@ class DiscountFeatureContext extends AbstractDomainFeatureContext
             $command->setProductConditions($productConditions);
         }
 
+        if (isset(
+            $data['minimum_amount'],
+            $data['minimum_amount_currency'],
+            $data['minimum_amount_tax_included'],
+            $data['minimum_amount_shipping_included'])
+        ) {
+            $command->setMinimumAmount(
+                new DecimalNumber($data['minimum_amount']),
+                $this->referenceToId($data['minimum_amount_currency']),
+                PrimitiveUtils::castStringBooleanIntoBoolean($data['minimum_amount_tax_included']),
+                PrimitiveUtils::castStringBooleanIntoBoolean($data['minimum_amount_shipping_included']),
+            );
+        }
+
+        if (isset($data['minimum_product_quantity'])) {
+            $command->setMinimumProductsQuantity((int) $data['minimum_product_quantity']);
+        }
+
         try {
             /** @var DiscountId $discountId */
             $discountId = $this->getCommandBus()->handle($command);
@@ -448,6 +466,22 @@ class DiscountFeatureContext extends AbstractDomainFeatureContext
         if (null !== $productConditions) {
             $command->setProductConditions($productConditions);
         }
+        if (isset(
+            $data['minimum_amount'],
+            $data['minimum_amount_currency'],
+            $data['minimum_amount_tax_included'],
+            $data['minimum_amount_shipping_included'])
+        ) {
+            $command->setMinimumAmount(
+                new DecimalNumber($data['minimum_amount']),
+                $this->referenceToId($data['minimum_amount_currency']),
+                PrimitiveUtils::castStringBooleanIntoBoolean($data['minimum_amount_tax_included']),
+                PrimitiveUtils::castStringBooleanIntoBoolean($data['minimum_amount_shipping_included']),
+            );
+        }
+        if (isset($data['minimum_product_quantity'])) {
+            $command->setMinimumProductsQuantity((int) $data['minimum_product_quantity']);
+        }
 
         try {
             /* @var DiscountId $discountId */
@@ -592,7 +626,11 @@ class DiscountFeatureContext extends AbstractDomainFeatureContext
             Assert::assertSame((float) $expectedData['minimum_amount'], (float) (string) $discountForEditing->getMinimumAmount(), 'Unexpected minimum amount');
         }
         if (isset($expectedData['minimum_amount_currency'])) {
-            Assert::assertSame($this->getSharedStorage()->get($expectedData['minimum_amount_currency']), $discountForEditing->getMinimumAmountCurrencyId(), 'Unexpected minimum amount currency');
+            if (empty($expectedData['minimum_amount_currency'])) {
+                Assert::assertSame(0, $discountForEditing->getMinimumAmountCurrencyId(), 'Unexpected minimum amount currency');
+            } else {
+                Assert::assertSame($this->getSharedStorage()->get($expectedData['minimum_amount_currency']), $discountForEditing->getMinimumAmountCurrencyId(), 'Unexpected minimum amount currency');
+            }
         }
         if (isset($expectedData['minimum_amount_tax_included'])) {
             Assert::assertSame(PrimitiveUtils::castStringBooleanIntoBoolean($expectedData['minimum_amount_tax_included']), $discountForEditing->getMinimumAmountTaxIncluded(), 'Unexpected minimum amount tax included');

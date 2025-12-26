@@ -539,7 +539,7 @@ class ToolsCore
      * This method was named "Change language in cookie while clicking on a flag.",
      * but as of 25.12.2025, it does not really work at all. Language detection will
      * never work because the language is exclusively determined by the URL, the isolang
-     * is always set and the HTTP_ACCEPT_LANGUAGE is not parsed properly anyway. 
+     * is always set and the HTTP_ACCEPT_LANGUAGE is not parsed properly anyway.
      *
      * @return string iso code
      */

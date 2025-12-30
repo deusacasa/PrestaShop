@@ -58,6 +58,10 @@ Feature: Add discount
       | valid_to                   | 2019-12-01 00:00:00          |
       | code                       | product_discount_one_product |
       | reduction_percent          | 10.0                         |
+      | reduction_amount           |                              |
+      # Default currency is always used by default
+      | reduction_currency         | usd                          |
+      | taxIncluded                | false                        |
       | productConditionQuantity   | 42                           |
       | productCondition[products] | beer_product                 |
 
@@ -232,3 +236,18 @@ Feature: Add discount
       | code             | product_discount_no_reduction |
       | cheapest_product | true                          |
     Then I should get an error that the discount reduction is missing
+    # Try to create a discount with both reduction (percent and amount)
+    When I create a "product_level" discount "product_discount_both_reduction" with following properties:
+      | name[en-US]        | Promotion                     |
+      | name[fr-FR]        | Promotion_fr                  |
+      | active             | true                          |
+      | valid_from         | 2019-01-01 11:05:00           |
+      | valid_to           | 2019-12-01 00:00:00           |
+      | code               | product_discount_no_reduction |
+      | cheapest_product   | true                          |
+      # We set percetn AND amount at the same time
+      | reduction_percent  | 5.0                           |
+      | reduction_amount   | 5.0                           |
+      | reduction_currency | usd                           |
+      | taxIncluded        | true                          |
+    Then I should get an error that the discount reductions are incompatible

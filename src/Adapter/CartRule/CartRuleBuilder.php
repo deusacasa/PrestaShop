@@ -59,6 +59,10 @@ class CartRuleBuilder
         $cartRule->date_to = $validTo->format(DateTimeUtil::DEFAULT_DATETIME_FORMAT);
         $cartRule->quantity = $command->getTotalQuantity();
         $cartRule->quantity_per_user = $command->getQuantityPerUser();
+        $cartRule->reduction_amount = 0;
+        $cartRule->reduction_currency = 0;
+        $cartRule->reduction_tax = false;
+        $cartRule->reduction_percent = 0;
 
         $discountType = $command->getDiscountType()->getValue();
         $cartRule->id_cart_rule_type = $this->discountTypeRepository->getTypeIdByString($discountType);
@@ -71,11 +75,8 @@ class CartRuleBuilder
         )) {
             if ($command->getPercentDiscount()) {
                 $cartRule->reduction_percent = (float) (string) $command->getPercentDiscount();
-                $cartRule->reduction_amount = 0;
-                $cartRule->reduction_currency = 0;
-                $cartRule->reduction_tax = false;
-            } elseif ($command->getAmountDiscount()) {
-                $cartRule->reduction_percent = 0;
+            }
+            if ($command->getAmountDiscount()) {
                 $cartRule->reduction_amount = (float) (string) $command->getAmountDiscount()->getAmount();
                 $cartRule->reduction_currency = $command->getAmountDiscount()->getCurrencyId()->getValue();
                 $cartRule->reduction_tax = $command->getAmountDiscount()->isTaxIncluded();

@@ -47,7 +47,7 @@ class AddDiscountHandler implements AddDiscountHandlerInterface
         private readonly DiscountRepository $discountRepository,
         private readonly CartRuleBuilder $cartRuleBuilder,
         private readonly DiscountValidator $discountValidator,
-        private readonly DiscountConditionsUpdater $updater,
+        private readonly DiscountConditionsUpdater $discountConditionsUpdater,
         private readonly DiscountTypeRepository $discountTypeRepository,
     ) {
     }
@@ -57,13 +57,12 @@ class AddDiscountHandler implements AddDiscountHandlerInterface
      */
     public function handle(AddDiscountCommand $command): DiscountId
     {
-        $discountType = $command->getDiscountType()->getValue();
         $builtCartRule = $this->cartRuleBuilder->build($command);
         $this->discountValidator->validateDiscountPropertiesForType($builtCartRule, $command->getProductConditions());
         $discount = $this->discountRepository->add($builtCartRule);
         $newDiscountId = new DiscountId((int) $discount->id);
 
-        $this->updater->update(
+        $this->discountConditionsUpdater->update(
             $newDiscountId,
             $command->getMinimumProductsQuantity(),
             $command->getProductConditions(),

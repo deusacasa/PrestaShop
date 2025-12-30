@@ -77,4 +77,5 @@ class DiscountConstraintException extends DiscountException
     public const INVALID_COMPATIBLE_TYPE_IDS = 47;
     public const INVALID_PRODUCT_DISCOUNT_MISSING_TARGET = 48;
     public const INVALID_PRODUCT_DISCOUNT_INCOMPATIBLE_TARGETS = 49;
+    public const INVALID_PRODUCT_DISCOUNT_INCOMPATIBLE_REDUCTIONS = 50;
 }

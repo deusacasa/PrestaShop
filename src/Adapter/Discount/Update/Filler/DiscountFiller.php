@@ -93,8 +93,9 @@ class DiscountFiller
             $updatableProperties[] = 'reduction_product';
         }
 
-        // If a segment id being targeted we stop using the cheapest product (or the validator will trigger an error)
-        // but only if the command isn't modifying the cheapest product target as well
+        // If a segment is being targeted we automatically update the reduction_product (or the validator will trigger
+        // an error) but only if the command isn't modifying the cheapest product target as well, in which case reduction_product
+        // value uses DiscountSettings::CHEAPEST_PRODUCT
         if (null !== $command->getProductConditions() && null === $command->getCheapestProduct()) {
             $segmentTargeted = false;
             foreach ($command->getProductConditions() as $productCondition) {
@@ -109,25 +110,32 @@ class DiscountFiller
                 $updatableProperties[] = 'reduction_product';
             }
         }
+
         if ($command->isDirty('amountDiscount')) {
             $cartRule->reduction_amount = (float) (string) $command->getAmountDiscount()->getAmount();
             $cartRule->reduction_currency = $command->getAmountDiscount()->getCurrencyId()->getValue();
             $cartRule->reduction_tax = $command->getAmountDiscount()->isTaxIncluded();
-            $cartRule->reduction_percent = null;
             $updatableProperties[] = 'reduction_amount';
             $updatableProperties[] = 'reduction_currency';
             $updatableProperties[] = 'reduction_tax';
-            $updatableProperties[] = 'reduction_percent';
+
+            if (null === $command->getPercentDiscount()) {
+                $cartRule->reduction_percent = null;
+                $updatableProperties[] = 'reduction_percent';
+            }
         }
         if ($command->isDirty('percentDiscount')) {
             $cartRule->reduction_percent = (float) (string) $command->getPercentDiscount();
-            $cartRule->reduction_amount = null;
-            $cartRule->reduction_currency = 0;
-            $cartRule->reduction_tax = false;
             $updatableProperties[] = 'reduction_percent';
-            $updatableProperties[] = 'reduction_amount';
-            $updatableProperties[] = 'reduction_currency';
-            $updatableProperties[] = 'reduction_tax';
+
+            if (null === $command->getAmountDiscount()) {
+                $cartRule->reduction_amount = null;
+                $cartRule->reduction_currency = 0;
+                $cartRule->reduction_tax = false;
+                $updatableProperties[] = 'reduction_amount';
+                $updatableProperties[] = 'reduction_currency';
+                $updatableProperties[] = 'reduction_tax';
+            }
         }
         if ($command->isDirty('giftProductId')) {
             $cartRule->gift_product = $command->getGiftProductId()->getValue();

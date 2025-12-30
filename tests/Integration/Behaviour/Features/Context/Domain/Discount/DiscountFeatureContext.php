@@ -129,6 +129,14 @@ class DiscountFeatureContext extends AbstractDomainFeatureContext
     }
 
     /**
+     * @Then I should get an error that the discount reductions are incompatible
+     */
+    public function assertDiscountIncompatibleReductions(): void
+    {
+        $this->assertLastErrorIs(DiscountConstraintException::class, DiscountConstraintException::INVALID_PRODUCT_DISCOUNT_INCOMPATIBLE_REDUCTIONS);
+    }
+
+    /**
      * @Then discount :discountReference should have the following properties:
      *
      * @param string $discountReference
@@ -614,14 +622,26 @@ class DiscountFeatureContext extends AbstractDomainFeatureContext
         }
 
         if (isset($expectedData['reduction_percent'])) {
-            Assert::assertSame((float) $expectedData['reduction_percent'], (float) (string) $discountForEditing->getPercentDiscount(), 'Unexpected percent discount');
+            if (empty($expectedData['reduction_percent'])) {
+                Assert::assertNull($discountForEditing->getPercentDiscount(), 'Expected percent discount to be null');
+            } else {
+                Assert::assertSame((float) $expectedData['reduction_percent'], (float) (string) $discountForEditing->getPercentDiscount(), 'Unexpected percent discount');
+            }
         }
 
         if (isset($expectedData['reduction_amount'])) {
-            Assert::assertSame((float) $expectedData['reduction_amount'], (float) (string) $discountForEditing->getAmountDiscount(), 'Unexpected amount discount');
+            if (empty($expectedData['reduction_amount'])) {
+                Assert::assertNull($discountForEditing->getAmountDiscount(), 'Expected amount discount to be null');
+            } else {
+                Assert::assertSame((float) $expectedData['reduction_amount'], (float) (string) $discountForEditing->getAmountDiscount(), 'Unexpected amount discount');
+            }
         }
         if (isset($expectedData['reduction_currency'])) {
-            Assert::assertSame($this->getSharedStorage()->get($expectedData['reduction_currency']), $discountForEditing->getCurrencyId(), 'Unexpected reduction currency');
+            if (empty($expectedData['reduction_currency'])) {
+                Assert::assertSame(0, $discountForEditing->getCurrencyId(), 'Unexpected reduction currency');
+            } else {
+                Assert::assertSame($this->getSharedStorage()->get($expectedData['reduction_currency']), $discountForEditing->getCurrencyId(), 'Unexpected reduction currency');
+            }
         }
         if (isset($expectedData['taxIncluded'])) {
             Assert::assertSame(PrimitiveUtils::castStringBooleanIntoBoolean($expectedData['taxIncluded']), $discountForEditing->isTaxIncluded(), 'Unexpected tax included');

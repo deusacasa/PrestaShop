@@ -46,7 +46,7 @@ class UpdateDiscountHandler implements UpdateDiscountCommandHandlerInterface
         private readonly DiscountRepository $discountRepository,
         private readonly DiscountFiller $discountFiller,
         private readonly DiscountValidator $discountValidator,
-        private readonly DiscountConditionsUpdater $updater,
+        private readonly DiscountConditionsUpdater $discountConditionsUpdater,
         private readonly DiscountTypeRepository $discountTypeRepository,
     ) {
     }
@@ -62,16 +62,27 @@ class UpdateDiscountHandler implements UpdateDiscountCommandHandlerInterface
             CannotUpdateDiscountException::FAILED_UPDATE_DISCOUNT
         );
 
-        $this->updater->update(
-            $command->getDiscountId(),
-            $command->getMinimumProductsQuantity(),
-            $command->getProductConditions(),
-            $command->getMinimumAmount(),
-            $command->getMinimumAmountShippingIncluded(),
-            $command->getCarrierIds() ? array_map(fn (CarrierId $carrierId) => $carrierId->getValue(), $command->getCarrierIds()) : null,
-            $command->getCountryIds() ? array_map(fn (CountryId $countryId) => $countryId->getValue(), $command->getCountryIds()) : null,
-            $command->getCustomerGroupIds() ? array_map(fn (GroupId $groupId) => $groupId->getValue(), $command->getCustomerGroupIds()) : null,
-        );
+        // Only update conditions if at least one is specified
+        if ($command->getMinimumProductsQuantity() !== null
+            || $command->getProductConditions() !== null
+            // If cheapest product was set we must remove the product conditions
+            || $command->getCheapestProduct()
+            || $command->getMinimumAmount() !== null
+            || $command->getMinimumAmountShippingIncluded() !== null
+            || $command->getCarrierIds() !== null
+            || $command->getCountryIds() !== null
+            || $command->getCustomerGroupIds() !== null) {
+            $this->discountConditionsUpdater->update(
+                $command->getDiscountId(),
+                $command->getMinimumProductsQuantity(),
+                $command->getProductConditions(),
+                $command->getMinimumAmount(),
+                $command->getMinimumAmountShippingIncluded(),
+                $command->getCarrierIds() ? array_map(fn (CarrierId $carrierId) => $carrierId->getValue(), $command->getCarrierIds()) : null,
+                $command->getCountryIds() ? array_map(fn (CountryId $countryId) => $countryId->getValue(), $command->getCountryIds()) : null,
+                $command->getCustomerGroupIds() ? array_map(fn (GroupId $groupId) => $groupId->getValue(), $command->getCustomerGroupIds()) : null,
+            );
+        }
 
         if (null !== $command->getCompatibleDiscountTypeIds()) {
             $this->discountTypeRepository->setCompatibleTypesForDiscount($command->getDiscountId()->getValue(), $command->getCompatibleDiscountTypeIds());

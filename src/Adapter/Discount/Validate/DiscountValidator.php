@@ -34,6 +34,7 @@ use PrestaShop\PrestaShop\Adapter\Discount\Repository\DiscountRepository;
 use PrestaShop\PrestaShop\Adapter\Product\Repository\ProductRepository;
 use PrestaShop\PrestaShop\Core\Domain\Discount\DiscountSettings;
 use PrestaShop\PrestaShop\Core\Domain\Discount\Exception\DiscountConstraintException;
+use PrestaShop\PrestaShop\Core\Domain\Discount\ValueObject\DiscountId;
 use PrestaShop\PrestaShop\Core\Domain\Discount\ValueObject\DiscountType;
 use PrestaShop\PrestaShop\Core\Domain\Product\ValueObject\ProductId;
 use PrestaShop\PrestaShop\Core\Domain\Shop\ValueObject\ShopConstraint;
@@ -134,6 +135,13 @@ class DiscountValidator extends AbstractObjectModelValidator
                 break;
             case DiscountType::PRODUCT_LEVEL:
                 $segmentTargeted = false;
+                $discountCheapestProduct = $discount->reduction_product === DiscountSettings::CHEAPEST_PRODUCT;
+
+                // During update (so only for CartRule with existing ID)) When no value is updated, we use the current product rules or we would end up with
+                // an error that cart rule has no target
+                if (!$discountCheapestProduct && null === $productConditions && $discount->id) {
+                    $productConditions = $this->discountRepository->getProductRulesGroup(new DiscountId((int) $discount->id));
+                }
                 if (!empty($productConditions)) {
                     foreach ($productConditions as $productCondition) {
                         if (!$productCondition->isEmpty()) {
@@ -142,7 +150,7 @@ class DiscountValidator extends AbstractObjectModelValidator
                         }
                     }
                 }
-                $discountCheapestProduct = $discount->reduction_product === DiscountSettings::CHEAPEST_PRODUCT;
+                // At least one target must be selected, but never both
                 if (!$discountCheapestProduct && !$segmentTargeted) {
                     throw new DiscountConstraintException('Product discount must target at least one product.', DiscountConstraintException::INVALID_PRODUCT_DISCOUNT_MISSING_TARGET);
                 }
@@ -150,10 +158,14 @@ class DiscountValidator extends AbstractObjectModelValidator
                     throw new DiscountConstraintException('You need to choose between cheapest product or product segment.', DiscountConstraintException::INVALID_PRODUCT_DISCOUNT_INCOMPATIBLE_TARGETS);
                 }
 
-                // Must have either amount or percent discount
+                // Either amount or percent discount must be defined, but never both
                 if (!$hasReductionAmount && !$hasReductionPercent) {
                     throw new DiscountConstraintException('Product discount must have a discount value (amount or percent).', DiscountConstraintException::INVALID_MISSING_REDUCTION);
                 }
+                if ($hasReductionAmount && $hasReductionPercent) {
+                    throw new DiscountConstraintException('You need to choose between reduction amount or percent.', DiscountConstraintException::INVALID_PRODUCT_DISCOUNT_INCOMPATIBLE_REDUCTIONS);
+                }
+
                 break;
             case DiscountType::FREE_GIFT:
                 if (empty($discount->gift_product)) {

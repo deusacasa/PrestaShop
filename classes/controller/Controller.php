@@ -816,6 +816,6 @@ abstract class ControllerCore
 
     public function getControllerName(): string
     {
-        return str_replace('Core', '', get_class($this));
+        return get_class($this);
     }
 }

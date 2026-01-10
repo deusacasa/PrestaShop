@@ -56,6 +56,13 @@ class UpdateDiscountHandler implements UpdateDiscountCommandHandlerInterface
         $cartRule = $this->discountRepository->get($command->getDiscountId());
         $updatableProperties = $this->discountFiller->fillUpdatableProperties($cartRule, $command);
         $this->discountValidator->validateDiscountPropertiesForType($cartRule, $command->getProductConditions());
+        $this->discountValidator->validateAssociations(
+            $command->getProductConditions(),
+            $command->getCarrierIds() ? array_map(fn (CarrierId $carrierId) => $carrierId->getValue(), $command->getCarrierIds()) : null,
+            $command->getCountryIds() ? array_map(fn (CountryId $countryId) => $countryId->getValue(), $command->getCountryIds()) : null,
+            $command->getCustomerGroupIds() ? array_map(fn (GroupId $groupId) => $groupId->getValue(), $command->getCustomerGroupIds()) : null,
+        );
+
         $this->discountRepository->partialUpdate(
             $cartRule,
             $updatableProperties,

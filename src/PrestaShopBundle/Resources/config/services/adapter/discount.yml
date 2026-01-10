@@ -21,6 +21,9 @@ services:
   PrestaShop\PrestaShop\Adapter\Discount\CommandHandler\DuplicateDiscountHandler:
     autoconfigure: true
 
+  PrestaShop\PrestaShop\Adapter\Discount\Update\DiscountBuilder:
+    autoconfigure: true
+
   PrestaShop\PrestaShop\Adapter\Discount\Update\Filler\DiscountFiller:
     autoconfigure: true
 

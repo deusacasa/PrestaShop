@@ -29,6 +29,7 @@ namespace PrestaShop\PrestaShop\Adapter\Discount\Update;
 use CartRule;
 use Doctrine\DBAL\Connection;
 use PrestaShop\PrestaShop\Adapter\Discount\Repository\DiscountRepository;
+use PrestaShop\PrestaShop\Adapter\Discount\Trait\ProductConditionsTrait;
 use PrestaShop\PrestaShop\Core\Domain\Discount\DiscountSettings;
 use PrestaShop\PrestaShop\Core\Domain\Discount\Exception\CannotUpdateDiscountException;
 use PrestaShop\PrestaShop\Core\Domain\Discount\ProductRuleGroup;
@@ -38,6 +39,8 @@ use PrestaShop\PrestaShop\Core\Domain\Discount\ValueObject\MinimumAmount;
 
 class DiscountConditionsUpdater
 {
+    use ProductConditionsTrait;
+
     public function __construct(
         private readonly DiscountRepository $discountRepository,
         private readonly Connection $connection,
@@ -52,7 +55,7 @@ class DiscountConditionsUpdater
      *
      * @param DiscountId $discountId
      * @param int|null $minimumProductQuantity
-     * @param array|null $productConditions
+     * @param ProductRuleGroup[]|null $productConditions
      * @param MinimumAmount|null $minimumAmount
      * @param int[]|null $carrierIds
      * @param int[]|null $countryIds
@@ -147,20 +150,7 @@ class DiscountConditionsUpdater
         // First clear all product rules (meaning if empty array is provided in this method, they are removed and no
         // new one is created, which is used to remove product conditions)
         $updatableProperties = $this->cleanDiscountProductRules($discount);
-
-        // Check that the product rules really target products, if not we don't apply them to avoid
-        // creating empty rule groups
-        $containsRules = false;
-        foreach ($productRuleGroups as $productRuleGroup) {
-            foreach ($productRuleGroup->getRules() as $productRule) {
-                if (!empty($productRule->getItemIds())) {
-                    $containsRules = true;
-                    break 2;
-                }
-            }
-        }
-
-        if (!$containsRules) {
+        if (!$this->isSegmentTargeted($productRuleGroups)) {
             return $updatableProperties;
         }
 

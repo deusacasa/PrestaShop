@@ -30,15 +30,35 @@ namespace PrestaShop\PrestaShop\Adapter\Discount\Validate;
 use CartRule;
 use PrestaShop\Decimal\DecimalNumber;
 use PrestaShop\PrestaShop\Adapter\AbstractObjectModelValidator;
+use PrestaShop\PrestaShop\Adapter\Attribute\Repository\AttributeRepository;
+use PrestaShop\PrestaShop\Adapter\Carrier\Repository\CarrierRepository;
+use PrestaShop\PrestaShop\Adapter\Category\Repository\CategoryRepository;
+use PrestaShop\PrestaShop\Adapter\Country\Repository\CountryRepository;
+use PrestaShop\PrestaShop\Adapter\Customer\Group\Repository\GroupRepository;
 use PrestaShop\PrestaShop\Adapter\Discount\Repository\DiscountRepository;
 use PrestaShop\PrestaShop\Adapter\Discount\Trait\ProductConditionsTrait;
+use PrestaShop\PrestaShop\Adapter\Feature\Repository\FeatureValueRepository;
+use PrestaShop\PrestaShop\Adapter\Manufacturer\Repository\ManufacturerRepository;
+use PrestaShop\PrestaShop\Adapter\Product\Combination\Repository\CombinationRepository;
 use PrestaShop\PrestaShop\Adapter\Product\Repository\ProductRepository;
+use PrestaShop\PrestaShop\Adapter\Supplier\Repository\SupplierRepository;
+use PrestaShop\PrestaShop\Core\Domain\AttributeGroup\Attribute\ValueObject\AttributeId;
+use PrestaShop\PrestaShop\Core\Domain\Carrier\ValueObject\CarrierId;
+use PrestaShop\PrestaShop\Core\Domain\Category\ValueObject\CategoryId;
+use PrestaShop\PrestaShop\Core\Domain\Country\ValueObject\CountryId;
+use PrestaShop\PrestaShop\Core\Domain\Customer\Group\ValueObject\GroupId;
 use PrestaShop\PrestaShop\Core\Domain\Discount\DiscountSettings;
 use PrestaShop\PrestaShop\Core\Domain\Discount\Exception\DiscountConstraintException;
+use PrestaShop\PrestaShop\Core\Domain\Discount\ProductRuleGroup;
+use PrestaShop\PrestaShop\Core\Domain\Discount\ProductRuleType;
 use PrestaShop\PrestaShop\Core\Domain\Discount\ValueObject\DiscountId;
 use PrestaShop\PrestaShop\Core\Domain\Discount\ValueObject\DiscountType;
+use PrestaShop\PrestaShop\Core\Domain\Feature\ValueObject\FeatureValueId;
+use PrestaShop\PrestaShop\Core\Domain\Manufacturer\ValueObject\ManufacturerId;
+use PrestaShop\PrestaShop\Core\Domain\Product\Combination\ValueObject\CombinationId;
 use PrestaShop\PrestaShop\Core\Domain\Product\ValueObject\ProductId;
 use PrestaShop\PrestaShop\Core\Domain\Shop\ValueObject\ShopConstraint;
+use PrestaShop\PrestaShop\Core\Domain\Supplier\ValueObject\SupplierId;
 use PrestaShop\PrestaShop\Core\Exception\CoreException;
 use PrestaShopException;
 
@@ -52,7 +72,16 @@ class DiscountValidator extends AbstractObjectModelValidator
     protected ?DiscountRepository $discountRepository = null;
 
     public function __construct(
-        private ProductRepository $productRepository
+        private readonly ProductRepository $productRepository,
+        private readonly CombinationRepository $combinationRepository,
+        private readonly CarrierRepository $carrierRepository,
+        private readonly ManufacturerRepository $manufacturerRepository,
+        private readonly AttributeRepository $attributeRepository,
+        private readonly SupplierRepository $supplierRepository,
+        private readonly CategoryRepository $categoryRepository,
+        private readonly CountryRepository $countryRepository,
+        private readonly GroupRepository $groupRepository,
+        private readonly FeatureValueRepository $featureValueRepository,
     ) {
     }
 
@@ -106,6 +135,59 @@ class DiscountValidator extends AbstractObjectModelValidator
 
         $this->assertCodeIsUnique($cartRule);
         $this->assertDateRangeIsCorrect($cartRule);
+    }
+
+    /**
+     * @param ProductRuleGroup[]|null $productConditions
+     * @param int[]|null $carrierIds
+     * @param int[]|null $countryIds
+     * @param int[]|null $customerGroupIds
+     */
+    public function validateAssociations(
+        ?array $productConditions = null,
+        ?array $carrierIds = null,
+        ?array $countryIds = null,
+        ?array $customerGroupIds = null,
+    ): void {
+        if (!empty($productConditions)) {
+            // Check that selected items do exist
+            foreach ($productConditions as $productRuleGroup) {
+                foreach ($productRuleGroup->getRules() as $rule) {
+                    foreach ($rule->getItemIds() as $itemId) {
+                        match ($rule->getType()) {
+                            ProductRuleType::PRODUCTS => $this->productRepository->assertProductExists(new ProductId($itemId)),
+                            ProductRuleType::COMBINATIONS => $this->combinationRepository->assertCombinationExists(new CombinationId($itemId)),
+                            ProductRuleType::MANUFACTURERS => $this->manufacturerRepository->assertManufacturerExists(new ManufacturerId($itemId)),
+                            ProductRuleType::SUPPLIERS => $this->supplierRepository->assertSupplierExists(new SupplierId($itemId)),
+                            ProductRuleType::ATTRIBUTES => $this->attributeRepository->assertAttributeExists(new AttributeId($itemId)),
+                            ProductRuleType::FEATURES => $this->featureValueRepository->assertExists(new FeatureValueId($itemId)),
+                            ProductRuleType::CATEGORIES => $this->categoryRepository->assertCategoryExists(new CategoryId($itemId)),
+                        };
+                    }
+                }
+            }
+        }
+
+        // Check carrier exist
+        if (!empty($carrierIds)) {
+            foreach ($carrierIds as $carrierId) {
+                $this->carrierRepository->assertCarrierExists(new CarrierId($carrierId));
+            }
+        }
+
+        // Check countries exist
+        if (!empty($countryIds)) {
+            foreach ($countryIds as $countryId) {
+                $this->countryRepository->assertCountryExists(new CountryId($countryId));
+            }
+        }
+
+        // Check customer group exist
+        if (!empty($customerGroupIds)) {
+            foreach ($customerGroupIds as $customerGroupId) {
+                $this->groupRepository->assertGroupExists(new GroupId($customerGroupId));
+            }
+        }
     }
 
     /**

@@ -26,9 +26,9 @@
 
 namespace PrestaShop\PrestaShop\Adapter\Discount\CommandHandler;
 
-use PrestaShop\PrestaShop\Adapter\CartRule\CartRuleBuilder;
 use PrestaShop\PrestaShop\Adapter\Discount\Repository\DiscountRepository;
 use PrestaShop\PrestaShop\Adapter\Discount\Repository\DiscountTypeRepository;
+use PrestaShop\PrestaShop\Adapter\Discount\Update\DiscountBuilder;
 use PrestaShop\PrestaShop\Adapter\Discount\Update\DiscountConditionsUpdater;
 use PrestaShop\PrestaShop\Adapter\Discount\Validate\DiscountValidator;
 use PrestaShop\PrestaShop\Core\CommandBus\Attributes\AsCommandHandler;
@@ -45,7 +45,7 @@ class AddDiscountHandler implements AddDiscountHandlerInterface
 {
     public function __construct(
         private readonly DiscountRepository $discountRepository,
-        private readonly CartRuleBuilder $cartRuleBuilder,
+        private readonly DiscountBuilder $discountBuilder,
         private readonly DiscountValidator $discountValidator,
         private readonly DiscountConditionsUpdater $discountConditionsUpdater,
         private readonly DiscountTypeRepository $discountTypeRepository,
@@ -57,8 +57,15 @@ class AddDiscountHandler implements AddDiscountHandlerInterface
      */
     public function handle(AddDiscountCommand $command): DiscountId
     {
-        $builtCartRule = $this->cartRuleBuilder->build($command);
+        $builtCartRule = $this->discountBuilder->build($command);
         $this->discountValidator->validateDiscountPropertiesForType($builtCartRule, $command->getProductConditions());
+        $this->discountValidator->validateAssociations(
+            $command->getProductConditions(),
+            $command->getCarrierIds() ? array_map(fn (CarrierId $carrierId) => $carrierId->getValue(), $command->getCarrierIds()) : null,
+            $command->getCountryIds() ? array_map(fn (CountryId $countryId) => $countryId->getValue(), $command->getCountryIds()) : null,
+            $command->getCustomerGroupIds() ? array_map(fn (GroupId $groupId) => $groupId->getValue(), $command->getCustomerGroupIds()) : null,
+        );
+
         $discount = $this->discountRepository->add($builtCartRule);
         $newDiscountId = new DiscountId((int) $discount->id);
 

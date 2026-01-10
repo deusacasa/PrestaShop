@@ -24,7 +24,7 @@
  * @license   https://opensource.org/licenses/OSL-3.0 Open Software License (OSL 3.0)
  */
 
-namespace PrestaShop\PrestaShop\Adapter\CartRule;
+namespace PrestaShop\PrestaShop\Adapter\Discount\Update;
 
 use CartRule;
 use DateTimeImmutable;
@@ -34,7 +34,7 @@ use PrestaShop\PrestaShop\Core\Domain\Discount\DiscountSettings;
 use PrestaShop\PrestaShop\Core\Domain\Discount\ValueObject\DiscountType;
 use PrestaShop\PrestaShop\Core\Util\DateTime\DateTime as DateTimeUtil;
 
-class CartRuleBuilder
+class DiscountBuilder
 {
     public function __construct(
         private readonly DiscountTypeRepository $discountTypeRepository
@@ -86,9 +86,9 @@ class CartRuleBuilder
             $cartRule->gift_product_attribute = $command->getGiftCombinationId()?->getValue() ?? 0;
         }
 
-        if ($command->getDiscountType()->getValue() === DiscountType::PRODUCT_LEVEL) {
+        if ($command->getDiscountType()->getValue() === DiscountType::PRODUCT_LEVEL && $command->getCheapestProduct()) {
             // If cheapest product is enabled we set the specific value, if not we use 0 as the no target value
-            $cartRule->reduction_product = $command->getCheapestProduct() ? DiscountSettings::CHEAPEST_PRODUCT : 0;
+            $cartRule->reduction_product = DiscountSettings::CHEAPEST_PRODUCT;
         }
 
         return $cartRule;

@@ -85,6 +85,7 @@ use PrestaShop\PrestaShop\Core\Domain\Product\Exception\ProductOutOfStockExcepti
 use PrestaShop\PrestaShop\Core\Domain\Product\Exception\ProductSearchEmptyPhraseException;
 use PrestaShop\PrestaShop\Core\Domain\Product\Query\SearchProducts;
 use PrestaShop\PrestaShop\Core\Domain\Product\QueryResult\FoundProduct;
+use PrestaShop\PrestaShop\Core\Domain\Shipment\Command\DeleteShipmentProductFromOrder;
 use PrestaShop\PrestaShop\Core\Domain\Shipment\Command\EditShipment;
 use PrestaShop\PrestaShop\Core\Domain\Shipment\Command\MergeProductsToShipment;
 use PrestaShop\PrestaShop\Core\Domain\Shipment\Command\SplitShipment;
@@ -1793,6 +1794,10 @@ class OrderController extends PrestaShopAdminController
         try {
             $this->dispatchCommand(
                 new DeleteProductFromOrderCommand($orderId, $orderDetailId)
+            );
+
+            $this->dispatchCommand(
+                new DeleteShipmentProductFromOrder($orderId, $orderDetailId)
             );
 
             return $this->json(null, Response::HTTP_NO_CONTENT);

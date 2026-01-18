@@ -454,6 +454,8 @@ class ProductControllerCore extends ProductPresentingFrontControllerCore
     public function displayAjaxRefresh(): void
     {
         $product = $this->getTemplateVarProduct();
+
+        // After refresh, we will show the customer a new quantity he has to use
         $minimalProductQuantity = $this->getProductMinimalQuantity($product);
 
         // If the product is already in the cart, we can set the minimal quantity to 1
@@ -1182,33 +1184,37 @@ class ProductControllerCore extends ProductPresentingFrontControllerCore
 
     public function getTemplateVarProduct(): ProductLazyArray
     {
-        $productSettings = $this->getProductPresentationSettings();
-        // Hook displayProductExtraContent
-        $extraContentFinder = new ProductExtraContentFinder();
-
+        // Convert product object into array
         $product = $this->objectPresenter->present($this->product);
+
+        // Assign several product properties to the array
         $product['description'] = $this->transformDescriptionWithImg($this->product->description);
-        $product['out_of_stock'] = (int) $this->product->out_of_stock;
         $product['id_product_attribute'] = $this->getIdProductAttributeByGroupOrRequestOrDefault();
+
+        // @todo These three properties should be migrated into the lazy array, so they are available also in listings
         $product['minimal_quantity'] = $this->getProductMinimalQuantity($product);
         $product['cart_quantity'] = $this->context->cart->getProductQuantity((int) $this->product->id, $product['id_product_attribute'])['quantity'];
         $product['quantity_wanted'] = $this->getRequiredQuantity($product);
-        $product['extraContent'] = $extraContentFinder->addParams(['product' => $this->product])->present();
+
+        // Render hook displayProductExtraContent
+        $product['extraContent'] = (new ProductExtraContentFinder())->addParams(['product' => $this->product])->present();
         $product['ecotax_tax_inc'] = $this->product->getEcotax(null, true, true);
         $product['ecotax'] = Tools::convertPrice($this->getProductEcotax($product), $this->context->currency, true, $this->context);
 
+        // Enrich the product array
         $product_full = Product::getProductProperties($this->context->language->id, $product, $this->context);
 
+        // Add possible customizations
         $product_full = $this->addProductCustomizationData($product_full);
 
         $product_full['show_quantities'] = (bool) (
             Configuration::get('PS_DISPLAY_QTIES')
             && Configuration::get('PS_STOCK_MANAGEMENT')
-            && $this->product->quantity > 0
+            && $product_full['quantity'] > 0
             && $this->product->available_for_order
             && !Configuration::isCatalogMode()
         );
-        $product_full['quantity_label'] = ($this->product->quantity > 1) ? $this->trans('Items', [], 'Shop.Theme.Catalog') : $this->trans('Item', [], 'Shop.Theme.Catalog');
+        $product_full['quantity_label'] = ($product_full['quantity'] > 1) ? $this->trans('Items', [], 'Shop.Theme.Catalog') : $this->trans('Item', [], 'Shop.Theme.Catalog');
         $product_full['quantity_discounts'] = $this->quantity_discounts;
 
         $group_reduction = GroupReduction::getValueForProduct($this->product->id, (int) Group::getCurrent()->id);
@@ -1218,14 +1224,19 @@ class ProductControllerCore extends ProductPresentingFrontControllerCore
         $product_full['customer_group_discount'] = $group_reduction;
         $product_full['title'] = $this->getProductPageTitle();
 
+        // And finally, present it in the modern way
         return $this->getProductPresenter()->present(
-            $productSettings,
+            $this->getProductPresentationSettings(),
             $product_full,
             $this->context->language
         );
     }
 
     /**
+     * Gets the minimal quantity allowed for the product or its combination.
+     *
+     * @todo This method should be migrated to ProductLazyArray, so it's available also in listings.
+     *
      * @param array $product
      *
      * @return int
@@ -1294,19 +1305,41 @@ class ProductControllerCore extends ProductPresentingFrontControllerCore
     }
 
     /**
+     * Gets the minimal quantity the customer has to purchase. We cannot just let him buy 1 piece
+     * if the minimal quantity is higher. Also, we adjust it by the quantity already in cart.
+     *
+     * @todo This method should be migrated to ProductLazyArray, so it's available also in listings.
+     *
      * @param array $product
      *
      * @return int
      */
     protected function getRequiredQuantity(array $product)
     {
-        $requiredQuantity = (int) Tools::getValue('quantity_wanted', $this->getProductMinimalQuantity($product));
-        if ($requiredQuantity < $product['minimal_quantity']) {
-            $requiredQuantity = $product['minimal_quantity'];
+        // For the required quantity, we will need to limit it by the minimal quantity on the low side.
+        $minimalProductQuantity = $this->getProductMinimalQuantity($product);
+
+        /*
+         * We reduce it by the quantity we already have in cart. If the user already has a sufficient
+         * quantity in the cart, we don't need to add more. Although it may seem that we can just reset
+         * the minimal quantity to one in that case, we must not do that, because the quantity in the cart
+         * may not be the correct one.
+         */
+        if (!empty($product['cart_quantity'])) {
+            $minimalProductQuantity -= $product['cart_quantity'];
         }
 
-        if ($product['cart_quantity'] >= $requiredQuantity) {
-            return 0;
+        // Get the quantity wanted from the request
+        $requiredQuantity = (int) Tools::getValue('quantity_wanted');
+
+        // Safety check to fall back on one, if some nonsense was passed
+        if (empty($requiredQuantity)) {
+            $requiredQuantity = 1;
+        }
+
+        // And adjust the lower boundary depending on the minimal quantity
+        if ($requiredQuantity < $minimalProductQuantity) {
+            $requiredQuantity = $minimalProductQuantity;
         }
 
         return $requiredQuantity;

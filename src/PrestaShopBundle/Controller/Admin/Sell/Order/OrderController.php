@@ -886,6 +886,23 @@ class OrderController extends PrestaShopAdminController
         return !($allSelected && $allQuantitiesMatch);
     }
 
+    public function getShipmentsForProduct(
+        int $orderId,
+        int $productId,
+        #[Autowire(service: 'PrestaShop\PrestaShop\Adapter\Form\ChoiceProvider\AvailableShipmentForProductChoiceProvider')] ConfigurableFormChoiceProviderInterface $shipmentChoiceProvider
+    ): Response
+    {
+        $shipments = $shipmentChoiceProvider->getChoices([
+            'order_id' => $orderId,
+            'product_id' => $productId,
+        ]);
+
+        return $this->json(
+            ['shipments' => $shipments],
+            Response::HTTP_OK
+        );
+    }
+
     private function isShipmentShipped(int $orderId, int $shipmentId): bool
     {
         /** @var ShipmentForEditing $shipment */
@@ -1127,6 +1144,7 @@ class OrderController extends PrestaShopAdminController
                     $hasFreeShipping
                 );
             }
+
             $this->dispatchCommand($addProductCommand);
             $this->dispatchCommand(new AddProductToShipment($shipmentId, $productId, $orderId, $combinationId));
         } catch (Exception $e) {

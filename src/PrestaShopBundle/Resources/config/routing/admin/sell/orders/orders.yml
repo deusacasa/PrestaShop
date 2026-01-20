@@ -318,6 +318,18 @@ admin_orders_send_process_order_email:
   options:
     expose: true
 
+admin_orders_get_shipments:
+  path: /orders/{orderId}/product/{productId}/shipments
+  methods: [ POST ]
+  defaults:
+    _controller: PrestaShopBundle\Controller\Admin\Sell\Order\OrderController::getShipmentsForProduct
+    _legacy_controller: AdminOrders
+  requirements:
+    orderId: \d+
+    productId: \d+
+  options:
+    expose: true
+
 admin_orders_add_product:
   path: /{orderId}/products
   methods: [ POST ]

@@ -52,7 +52,9 @@ class AddProductToShipment
         $this->shipmentId = new ShipmentId($shipmentId);
         $this->productId = new ProductId($productId);
         $this->orderId = new OrderId($orderId);
-        $this->combinationId = new CombinationId($combinationId);
+        if ($combinationId > 0) {
+            $this->combinationId = new CombinationId($combinationId);
+        }
     }
 
     public function getShipmentId(): ShipmentId

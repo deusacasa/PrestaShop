@@ -49,11 +49,6 @@ class AddProductRowType extends TranslatorAwareType
     private $orderInvoiceByIdChoiceProvider;
 
     /**
-     * @var ConfigurableFormChoiceProviderInterface
-     */
-    private $shipmentChoiceProvider;
-
-    /**
      * @var int
      */
     private $contextLangId;
@@ -62,13 +57,11 @@ class AddProductRowType extends TranslatorAwareType
         TranslatorInterface $translator,
         array $locales,
         ConfigurableFormChoiceProviderInterface $orderInvoiceByIdChoiceProvider,
-        ConfigurableFormChoiceProviderInterface $shipmentChoiceProvider,
         int $contextLangId
     ) {
         parent::__construct($translator, $locales);
 
         $this->orderInvoiceByIdChoiceProvider = $orderInvoiceByIdChoiceProvider;
-        $this->shipmentChoiceProvider = $shipmentChoiceProvider;
         $this->contextLangId = $contextLangId;
     }
 
@@ -87,10 +80,12 @@ class AddProductRowType extends TranslatorAwareType
         if ($options['is_multishipment_is_enabled'] === true) {
             $builder->add('addShipment', ChoiceType::class, [
                 'label' => $this->trans('Select a shipment', 'Admin.Orderscustomers.Feature'),
-                'choices' => $this->shipmentChoiceProvider->getChoices([
-                    'order_id' => $options['order_id'],
-                    'product_id' => 3,
-                ]),
+                'choices' => [],
+                'disabled' => true,
+                'attr' => [
+                    'class' => 'custom-select',
+                    'data-disabled-until-product-selected' => true,
+                ],
             ]);
         }
 

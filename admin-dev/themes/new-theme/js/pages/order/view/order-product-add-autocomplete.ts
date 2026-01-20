@@ -46,6 +46,8 @@ export default class OrderProductAutocomplete {
 
   dropdownMenu: JQuery;
 
+  selectShipment: JQuery;
+
   searchTimeoutId: undefined | number | ReturnType<typeof setTimeout>;
 
   onItemClickedCallback: (product?: Record<string, any> | undefined) => void;
@@ -56,6 +58,7 @@ export default class OrderProductAutocomplete {
     this.input = input;
     this.results = [];
     this.searchTimeoutId = undefined;
+    this.selectShipment = $(OrderViewPageMap.selectAddShipment);
     this.dropdownMenu = $(OrderViewPageMap.productSearchInputAutocompleteMenu);
     /**
      * Permit to link to each value of dropdown a callback after item is clicked
@@ -139,7 +142,46 @@ export default class OrderProductAutocomplete {
 
     if (selectedProduct.length !== 0) {
       this.input.val(selectedProduct[0].name);
+      this.populateShipmentSelect(id);
       this.onItemClickedCallback(selectedProduct[0]);
     }
+  }
+
+  populateShipmentSelect(productId: number): void {
+    this.selectShipment.prop('disabled', true);
+    const orderId = Number(this.input.data('order'));
+
+    fetch(this.router.generate('admin_orders_get_shipments', {orderId, productId}), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    })
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error('An error occured while fetching shipments');
+        }
+        return response.json();
+      })
+      .then((data) => {
+        this.selectShipment.empty();
+        const shipments = data.shipments as Record<string, number>;
+
+        Object.entries(shipments).forEach(
+          ([label, value]) => {
+            if (value !== 0) {
+              this.selectShipment.append(
+                $('<option></option>').val(value).text(label)
+              );
+            }
+          }
+        );
+
+        this.selectShipment.prop('disabled', false);
+      })
+      .catch((error) => {
+        console.error('An error occured while fetching shipments ', error);
+        this.selectShipment.prop('disabled', true);
+      });
   }
 }

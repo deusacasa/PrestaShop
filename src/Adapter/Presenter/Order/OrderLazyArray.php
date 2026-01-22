@@ -167,6 +167,19 @@ class OrderLazyArray extends AbstractLazyArray
     }
 
     /**
+     * @return mixed
+     *
+     * @throws PrestaShopException
+     */
+    #[LazyArrayAttribute(arrayAccess: true)]
+    public function hasShipments()
+    {
+        $details = $this->getDetails();
+
+        return $details['shipments'];
+    }
+
+    /**
      * @return array
      */
     #[LazyArrayAttribute(arrayAccess: true)]

@@ -58,7 +58,7 @@ export default class OrderProductAutocomplete {
     this.input = input;
     this.results = [];
     this.searchTimeoutId = undefined;
-    this.selectShipment = document.querySelector(OrderViewPageMap.selectAddShipment) as HTMLSelectElement;
+    this.selectShipment = document.querySelector<HTMLSelectElement>(OrderViewPageMap.selectAddShipment)!;
     this.dropdownMenu = $(OrderViewPageMap.productSearchInputAutocompleteMenu);
     /**
      * Permit to link to each value of dropdown a callback after item is clicked

@@ -871,7 +871,7 @@ describe('FO - Checkout - Shipping methods : MultiCarrier', async () => {
     });
 
     it('should go to \'Shipping > Carriers\' page', async function () {
-      await testContext.addContextItem(this, 'testIdentifier', 'goToCarriersPage3', baseContext);
+      await testContext.addContextItem(this, 'testIdentifier', 'goToCarriersPage4', baseContext);
 
       await boDashboardPage.goToSubMenu(
         page,

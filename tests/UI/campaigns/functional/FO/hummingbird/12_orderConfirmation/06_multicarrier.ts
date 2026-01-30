@@ -457,7 +457,7 @@ describe('FO - Checkout - Shipping methods : MultiCarrier', async () => {
   // 5 - Get created carriers ID
   describe('Pre-condition: Get created carriers id', async () => {
     it('should go to \'Shipping> Carriers\' page', async function () {
-      await testContext.addContextItem(this, 'testIdentifier', 'goToCarriersPage2', baseContext);
+      await testContext.addContextItem(this, 'testIdentifier', 'goToCarriersPage3', baseContext);
 
       await boDashboardPage.goToSubMenu(
         page,
@@ -882,7 +882,7 @@ describe('FO - Checkout - Shipping methods : MultiCarrier', async () => {
     });
 
     it('should go to \'Shipping > Carriers\' page', async function () {
-      await testContext.addContextItem(this, 'testIdentifier', 'goToCarriersPage3', baseContext);
+      await testContext.addContextItem(this, 'testIdentifier', 'goToCarriersPage4', baseContext);
 
       await boDashboardPage.goToSubMenu(
         page,

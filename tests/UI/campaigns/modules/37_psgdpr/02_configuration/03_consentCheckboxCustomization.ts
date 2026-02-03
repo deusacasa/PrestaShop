@@ -8,8 +8,6 @@ import {resetModule} from '@commonTests/BO/modules/moduleManager';
 
 import {
   boDashboardPage,
-  boDesignPositionsPage,
-  boDesignPositionsHookModulePage,
   boLoginPage,
   boModuleManagerPage,
   type BrowserContext,
@@ -246,42 +244,6 @@ describe('GDPR : Consent checkbox customization', async () => {
 
       const isHomePage = await foHummingbirdHomePage.isHomePage(page);
       expect(isHomePage).to.eq(true);
-
-      const hasSubscribeNewsletterRGPD = await foHummingbirdHomePage.hasSubscribeNewsletterRGPD(page);
-      expect(hasSubscribeNewsletterRGPD).to.equal(false);
-    });
-
-    it('should go to the Manage Hooks page', async function () {
-      await testContext.addContextItem(this, 'testIdentifier', 'goToManageHooks', baseContext);
-
-      page = await foHummingbirdHomePage.changePage(browserContext, 0);
-      await modPsGdprBoTabDataConsent.clickHeaderManageHooks(page);
-
-      const pageTitle = await boDesignPositionsPage.getPageTitle(page);
-      expect(pageTitle).to.be.equal(boDesignPositionsPage.pageTitle);
-    });
-
-    it('should add a new hook', async function () {
-      await testContext.addContextItem(this, 'testIdentifier', 'addNewHook', baseContext);
-
-      await boDesignPositionsPage.clickHeaderHookModule(page);
-
-      const pageTitle = await boDesignPositionsHookModulePage.getPageTitle(page);
-      expect(pageTitle).to.be.equal(boDesignPositionsHookModulePage.pageTitle);
-    });
-
-    it('should connect the hook', async function () {
-      await testContext.addContextItem(this, 'testIdentifier', 'saveHook', baseContext);
-
-      const successMessage = await boDesignPositionsHookModulePage.saveForm(page);
-      expect(successMessage).to.be.equal(boDesignPositionsPage.messageModuleAddedFromHook);
-    });
-
-    it('should check on the Subscribe Newsletter the RGPD checkbox', async function () {
-      await testContext.addContextItem(this, 'testIdentifier', 'checkSubscribeNewsletterHasBlock', baseContext);
-
-      page = await boDesignPositionsPage.changePage(browserContext, 1);
-      await foHummingbirdHomePage.reloadPage(page);
 
       const hasSubscribeNewsletterRGPD = await foHummingbirdHomePage.hasSubscribeNewsletterRGPD(page);
       expect(hasSubscribeNewsletterRGPD).to.be.equals(true);

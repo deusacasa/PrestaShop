@@ -1,7 +1,6 @@
 name: Pull Request Validator
 on:
   pull_request:
-    types: [ opened, edited, reopened, milestoned, demilestoned ]
 
 concurrency:
   group: ${{ github.event_name }}-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
@@ -29,6 +28,3 @@ jobs:
         uses: Morishiri/block-merge-commits-action@v1.0.1
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
-  convention-check:
-    name: Validate PR Metadata
-    uses: PrestaShop/.github/.github/workflows/validate-pr-metadata.yml@master

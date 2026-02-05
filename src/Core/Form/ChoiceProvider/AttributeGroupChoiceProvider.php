@@ -27,6 +27,7 @@
 
 namespace PrestaShop\PrestaShop\Core\Form\ChoiceProvider;
 
+use PrestaShop\PrestaShop\Core\Context\ShopContext;
 use PrestaShop\PrestaShop\Core\Form\FormChoiceAttributeProviderInterface;
 use PrestaShop\PrestaShop\Core\Form\FormChoiceProviderInterface;
 use PrestaShopBundle\Entity\Repository\AttributeGroupRepository;
@@ -54,12 +55,12 @@ final class AttributeGroupChoiceProvider implements FormChoiceProviderInterface,
     /**
      * @param AttributeGroupRepository $attributeGroupRepository
      * @param int $langId
-     * @param int $shopId
+     * @param ShopContext $shopContext
      */
     public function __construct(
         private readonly AttributeGroupRepository $attributeGroupRepository,
         private readonly int $langId,
-        private readonly int $shopId,
+        private ShopContext $shopContext,
     ) {
     }
 
@@ -96,7 +97,14 @@ final class AttributeGroupChoiceProvider implements FormChoiceProviderInterface,
     {
         if (null === $this->attributeGroupsChoicesAttributes || null === $this->attributeGroupsChoices) {
             if (null === $this->attributeGroups) {
-                $this->attributeGroups = $this->attributeGroupRepository->findByLangAndShop($this->langId, $this->shopId);
+                if ($this->shopContext->isSingleShopContext()) {
+                    $this->attributeGroups = $this->attributeGroupRepository->findByLangAndShop(
+                        $this->langId,
+                        $this->shopContext->getShopConstraint()->getShopId()->getValue()
+                    );
+                } else {
+                    $this->attributeGroups = $this->attributeGroupRepository->findByLangForAllShops($this->langId);
+                }
             }
 
             $this->attributeGroupsChoices = [];

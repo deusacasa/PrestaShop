@@ -57,4 +57,24 @@ class AttributeGroupRepository extends \Doctrine\ORM\EntityRepository
                 'idLang' => $idLang,
             ])->getQuery()->getResult();
     }
+
+    /**
+     * Finds attribute groups by language and shop.
+     *
+     * @param int $idLang Language ID
+     *
+     * @return \PrestaShopBundle\Entity\AttributeGroup[]
+     */
+    public function findByLangForAllShops(int $idLang): array
+    {
+        return $this->createQueryBuilder('ag')
+            ->addSelect('agl')
+            ->join('ag.shops', 'ags')
+            ->join('ag.attributeGroupLangs', 'agl')
+            ->andWhere('agl.lang = :idLang')
+            ->orderBy('ag.position', 'ASC')
+            ->setParameters([
+                'idLang' => $idLang,
+            ])->getQuery()->getResult();
+    }
 }

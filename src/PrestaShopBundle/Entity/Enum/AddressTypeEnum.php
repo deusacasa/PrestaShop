@@ -31,26 +31,4 @@ enum AddressTypeEnum: string
     case BOTH = 'both';
     case INVOICE = 'invoice';
     case DELIVERY = 'delivery';
-
-    /**
-     * @return array
-     */
-    public static function getValues(): array
-    {
-        return [
-            self::BOTH->value,
-            self::INVOICE->value,
-            self::DELIVERY->value,
-        ];
-    }
-
-    /**
-     * @param string $value
-     *
-     * @return bool
-     */
-    public static function isValid(string $value): bool
-    {
-        return in_array($value, self::getValues(), true);
-    }
 }

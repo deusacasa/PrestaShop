@@ -35,17 +35,4 @@ enum BusinessEntityStatus: string
     case ACTIVE = 'active';
     case INACTIVE = 'inactive';
     case REJECTED = 'rejected';
-
-    /**
-     * @return string[]
-     */
-    public static function getValues(): array
-    {
-        return [
-            self::PENDING->value,
-            self::ACTIVE->value,
-            self::INACTIVE->value,
-            self::REJECTED->value,
-        ];
-    }
 }

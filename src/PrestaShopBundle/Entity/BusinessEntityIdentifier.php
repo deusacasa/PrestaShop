@@ -62,7 +62,7 @@ class BusinessEntityIdentifier
     private BusinessEntity $businessEntity;
 
     /**
-     * @ORM\ManyToOne(targetEntity="PrestaShopBundle\Entity\BusinessIdentifier")
+     * @ORM\ManyToOne(targetEntity="PrestaShopBundle\Entity\BusinessIdentifier", inversedBy="businessEntityIdentifiers")
      *
      * @ORM\JoinColumn(name="id_business_identifier", referencedColumnName="id_business_identifier", nullable=false)
      */

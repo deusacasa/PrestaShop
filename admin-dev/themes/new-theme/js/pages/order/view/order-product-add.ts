@@ -109,7 +109,8 @@ export default class OrderProductAdd {
     this.productAddMenuBtn = $(OrderViewPageMap.productAddBtn);
     this.productShipmentSelect = $(OrderViewPageMap.selectAddShipment);
     this.available = null;
-    this.isMultishipmentIsEnabled = Boolean(Number($(OrderViewPageMap.productsTable).data('multishipmentEnabled')));
+    // eslint-disable-next-line max-len
+    this.isMultishipmentIsEnabled = document.querySelector<HTMLElement>(OrderViewPageMap.productsTable)?.dataset.multishipmentEnabled === '1';
     this.setupListener();
     this.product = {};
     this.currencyPrecision = $(OrderViewPageMap.productsTable).data(

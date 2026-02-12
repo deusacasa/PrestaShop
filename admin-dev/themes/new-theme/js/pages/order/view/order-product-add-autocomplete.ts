@@ -61,7 +61,8 @@ export default class OrderProductAutocomplete {
     this.results = [];
     this.searchTimeoutId = undefined;
     this.selectShipment = document.querySelector<HTMLSelectElement>(OrderViewPageMap.selectAddShipment)!;
-    this.isMultishipmentIsEnabled = Boolean(Number($(OrderViewPageMap.productsTable).data('multishipmentEnabled')));
+    // eslint-disable-next-line max-len
+    this.isMultishipmentIsEnabled = document.querySelector<HTMLElement>(OrderViewPageMap.productsTable)?.dataset.multishipmentEnabled === '1';
 
     if (this.isMultishipmentIsEnabled) {
       this.dropdownMenu = $(OrderViewPageMap.productSearchInputAutocompleteMenuOnModale);

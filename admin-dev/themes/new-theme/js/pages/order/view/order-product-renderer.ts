@@ -37,7 +37,8 @@ export default class OrderProductRenderer {
   constructor() {
     this.router = new Router();
 
-    this.isMultishipmentIsEnabled = Boolean(Number($(OrderViewPageMap.productsTable).data('multishipmentEnabled')));
+    // eslint-disable-next-line max-len
+    this.isMultishipmentIsEnabled = document.querySelector<HTMLElement>(OrderViewPageMap.productsTable)?.dataset.multishipmentEnabled === '1';
   }
 
   addOrUpdateProductToList($productRow: JQuery, newRow: HTMLElement): void {

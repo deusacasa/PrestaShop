@@ -40,7 +40,8 @@ $(() => {
   const DISCOUNT_TYPE_AMOUNT = 'amount';
   const DISCOUNT_TYPE_PERCENT = 'percent';
   const DISCOUNT_TYPE_FREE_SHIPPING = 'free_shipping';
-  const multishipmentIsEnabled = Boolean(Number($(OrderViewPageMap.productsTable).data('multishipmentEnabled')));
+  // eslint-disable-next-line max-len
+  const multishipmentIsEnabled = document.querySelector<HTMLElement>(OrderViewPageMap.productsTable)?.dataset.multishipmentEnabled === '1';
 
   new SplitShipmentManager();
   new MergeShipmentManager();

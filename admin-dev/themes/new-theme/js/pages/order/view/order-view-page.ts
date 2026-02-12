@@ -79,7 +79,8 @@ export default class OrderViewPage {
     this.orderInvoicesRefresher = new OrderInvoicesRefresher();
     this.orderProductCancel = new OrderProductCancel();
     this.router = new Router();
-    this.isMultishipmentIsEnabled = Boolean(Number($(OrderViewPageMap.productsTable).data('multishipmentEnabled')));
+    // eslint-disable-next-line max-len
+    this.isMultishipmentIsEnabled = document.querySelector<HTMLElement>(OrderViewPageMap.productsTable)?.dataset.multishipmentEnabled === '1';
     this.listenToEvents();
   }
 

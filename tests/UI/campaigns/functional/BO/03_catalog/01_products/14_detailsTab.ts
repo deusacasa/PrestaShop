@@ -491,18 +491,10 @@ describe('BO - Catalog - Products : Details tab', async () => {
       await testContext.addContextItem(this, 'testIdentifier', 'removeAndAddCustomizations', baseContext);
 
       // Remove the first one (same bug scenario as features: delete then add causes index collision)
-      await boProductsCreateTabDetailsPage.deleteCustomizations(page, {
-        ...editProductData,
-        customizations: [editProductData.customizations[0]],
-      });
+      await boProductsCreateTabDetailsPage.deleteCustomizationNth(page, 1);
       // Add 2 new customizations
-      await boProductsCreateTabDetailsPage.addNewCustomizations(page, {
-        ...editProductData,
-        customizations: [
-          {label: 'NewField1', type: 'Text', required: false},
-          {label: 'NewField2', type: 'Text', required: false},
-        ],
-      });
+      await boProductsCreateTabDetailsPage.addNewCustomization(page, {label: 'NewField1', type: 'Text', required: false});
+      await boProductsCreateTabDetailsPage.addNewCustomization(page, {label: 'NewField2', type: 'Text', required: false});
 
       const message = await boProductsCreatePage.saveProduct(page);
       expect(message).to.eq(boProductsCreatePage.successfulUpdateMessage);
@@ -541,15 +533,7 @@ describe('BO - Catalog - Products : Details tab', async () => {
       await testContext.addContextItem(this, 'testIdentifier', 'deleteCustomizations', baseContext);
 
       // 5 customizations to delete: 3 remaining original + 2 newly added
-      const customizationsToDelete = [
-        ...editProductData.customizations.slice(1),
-        {label: 'NewField1', type: 'Text' as const, required: false},
-        {label: 'NewField2', type: 'Text' as const, required: false},
-      ];
-      await boProductsCreateTabDetailsPage.deleteCustomizations(page, {
-        ...editProductData,
-        customizations: customizationsToDelete,
-      });
+      await boProductsCreateTabDetailsPage.deleteCustomizations(page);
 
       const message = await boProductsCreatePage.saveProduct(page);
       expect(message).to.eq(boProductsCreatePage.successfulUpdateMessage);

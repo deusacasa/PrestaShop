@@ -61,19 +61,11 @@ class BusinessEntityAddress
      */
     private AddressTypeEnum $addressType = AddressTypeEnum::BOTH;
 
-    /**
-     * @return BusinessEntity
-     */
     public function getBusinessEntity(): BusinessEntity
     {
         return $this->businessEntity;
     }
 
-    /**
-     * @param BusinessEntity $businessEntity
-     *
-     * @return $this
-     */
     public function setBusinessEntity(BusinessEntity $businessEntity): self
     {
         $this->businessEntity = $businessEntity;
@@ -81,19 +73,11 @@ class BusinessEntityAddress
         return $this;
     }
 
-    /**
-     * @return int $idAddress
-     */
     public function getAddressId(): int
     {
         return $this->idAddress;
     }
 
-    /**
-     * @param int $idAddress
-     *
-     * @return $this
-     */
     public function setAddressId(int $idAddress): self
     {
         $this->idAddress = $idAddress;
@@ -101,19 +85,11 @@ class BusinessEntityAddress
         return $this;
     }
 
-    /**
-     * @return AddressTypeEnum
-     */
     public function getAddressType(): AddressTypeEnum
     {
         return $this->addressType;
     }
 
-    /**
-     * @param AddressTypeEnum $addressType
-     *
-     * @return $this
-     */
     public function setAddressType(AddressTypeEnum $addressType): self
     {
         $this->addressType = $addressType;

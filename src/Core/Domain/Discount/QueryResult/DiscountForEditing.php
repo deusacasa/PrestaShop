@@ -25,6 +25,7 @@ class DiscountForEditing
         private readonly DateTimeImmutable $validFrom,
         private readonly ?DateTimeImmutable $validTo,
         private readonly ?int $totalQuantity,
+        private readonly int $quantityUsedInOrders,
         private readonly ?int $quantityPerUser,
         private readonly string $description,
         private readonly string $code,
@@ -87,6 +88,11 @@ class DiscountForEditing
     public function getTotalQuantity(): ?int
     {
         return $this->totalQuantity;
+    }
+
+    public function getQuantityUsedInOrders(): int
+    {
+        return $this->quantityUsedInOrders;
     }
 
     public function getQuantityPerUser(): ?int

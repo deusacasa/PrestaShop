@@ -614,8 +614,11 @@ class DiscountFeatureContext extends AbstractDomainFeatureContext
             if ($expectedData['total_quantity'] === 'null') {
                 Assert::assertNull($discountForEditing->getTotalQuantity(), 'Unexpected total quantity, expected null');
             } else {
-                Assert::assertSame((int) $expectedData['total_quantity'], $discountForEditing->getTotalQuantity(), 'Unexpected quantity');
+                Assert::assertSame((int) $expectedData['total_quantity'], $discountForEditing->getTotalQuantity(), 'Unexpected total_quantity');
             }
+        }
+        if (isset($expectedData['quantity_used_in_orders'])) {
+            Assert::assertSame((int) $expectedData['quantity_used_in_orders'], $discountForEditing->getQuantityUsedInOrders(), 'Unexpected quantity_used_in_orders');
         }
         if (isset($expectedData['quantity_per_user'])) {
             if ($expectedData['quantity_per_user'] === 'null') {

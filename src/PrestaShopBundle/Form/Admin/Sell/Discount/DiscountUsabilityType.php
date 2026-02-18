@@ -10,6 +10,7 @@ namespace PrestaShopBundle\Form\Admin\Sell\Discount;
 
 use PrestaShop\PrestaShop\Core\Domain\Discount\ValueObject\DiscountType as DiscountTypeVO;
 use PrestaShopBundle\Form\Admin\Type\CardType;
+use PrestaShopBundle\Form\Admin\Type\TextPreviewType;
 use PrestaShopBundle\Form\Admin\Type\TranslatorAwareType;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Symfony\Component\Form\Extension\Core\Type\IntegerType;
@@ -58,6 +59,10 @@ class DiscountUsabilityType extends TranslatorAwareType
                 'constraints' => [
                     new Assert\GreaterThanOrEqual(0),
                 ],
+            ])
+            ->add('quantity_used', TextPreviewType::class, [
+                'label' => $this->trans('Quantity used in orders:', 'Admin.Catalog.Feature'),
+                'required' => false,
             ])
             ->add('quantity_per_customer', IntegerType::class, [
                 'required' => false,

@@ -44,8 +44,9 @@ Feature: Customer using discount with usage limits in FO
       | quantity_per_user        | 1                   |
       | minimum_product_quantity | 0                   |
     And discount "vip_discount10" should have the following properties:
-      | total_quantity    | 1 |
-      | quantity_per_user | 1 |
+      | total_quantity          | 1 |
+      | quantity_per_user       | 1 |
+      | quantity_used_in_orders | 0 |
     # First Johh's cart + discount with order placed
     When I create an empty cart "john_cart10" for customer "testCustomer"
     And I add 2 product "product1" to the cart "john_cart10"
@@ -62,6 +63,11 @@ Feature: Customer using discount with usage limits in FO
       | total_discount | -$7.00 |
       | total          | $53.00 |
     And I add order "john_order" from cart "john_cart10" with "dummy_payment" payment method and "Payment accepted" order status
+    # Total quantity on the discount is not supposed to have changed
+    And discount "vip_discount10" should have the following properties:
+      | total_quantity          | 1 |
+      | quantity_per_user       | 1 |
+      | quantity_used_in_orders | 1 |
     # Now Jane's cart + discount
     When I create an empty cart "jane_cart10" for customer "testCustomer2"
     And I add 2 product "product1" to the cart "jane_cart10"
@@ -82,8 +88,9 @@ Feature: Customer using discount with usage limits in FO
       | quantity_per_user        | 1                   |
       | minimum_product_quantity | 0                   |
     And discount "vip_discount11" should have the following properties:
-      | total_quantity    | 1 |
-      | quantity_per_user | 1 |
+      | total_quantity          | 1 |
+      | quantity_per_user       | 1 |
+      | quantity_used_in_orders | 0 |
     # First Johh's cart + discount with order placed
     When I create an empty cart "john_cart12" for customer "testCustomer"
     And I add 2 product "product1" to the cart "john_cart12"
@@ -100,6 +107,10 @@ Feature: Customer using discount with usage limits in FO
       | total_discount | -$5.00 |
       | total          | $55.12 |
     And I add order "john_order" from cart "john_cart12" with "dummy_payment" payment method and "Payment accepted" order status
+    And discount "vip_discount11" should have the following properties:
+      | total_quantity          | 1 |
+      | quantity_per_user       | 1 |
+      | quantity_used_in_orders | 1 |
     # Now Jane's cart + discount
     When I create an empty cart "jane_cart12" for customer "testCustomer2"
     And I add 2 product "product1" to the cart "jane_cart12"
@@ -119,8 +130,9 @@ Feature: Customer using discount with usage limits in FO
       | quantity_per_user        | 1                   |
       | minimum_product_quantity | 0                   |
     And discount "vip_discount" should have the following properties:
-      | total_quantity    | 100 |
-      | quantity_per_user | 1   |
+      | total_quantity          | 100 |
+      | quantity_per_user       | 1   |
+      | quantity_used_in_orders | 0   |
     # First Johh's cart + discount with order placed
     When I create an empty cart "john_cart" for customer "testCustomer"
     And I add 2 product "product1" to the cart "john_cart"
@@ -129,6 +141,10 @@ Feature: Customer using discount with usage limits in FO
     Then cart "john_cart" total with tax included should be '$40.00'
     And I select "US" address as delivery and invoice address for customer "testCustomer" in cart "john_cart"
     And I add order "john_order" from cart "john_cart" with "dummy_payment" payment method and "Payment accepted" order status
+    And discount "vip_discount" should have the following properties:
+      | total_quantity          | 100 |
+      | quantity_per_user       | 1   |
+      | quantity_used_in_orders | 1   |
     # Second John's cart with discount already used before
     When I create an empty cart "john_cart2" for customer "testCustomer"
     And I add 2 product "product1" to the cart "john_cart2"
@@ -154,8 +170,9 @@ Feature: Customer using discount with usage limits in FO
       | quantity_per_user        | 1                   |
       | minimum_product_quantity | 0                   |
     And discount "vip_discount2" should have the following properties:
-      | total_quantity    | 1 |
-      | quantity_per_user | 1 |
+      | total_quantity          | 1 |
+      | quantity_per_user       | 1 |
+      | quantity_used_in_orders | 0 |
     # First Johh's cart + discount with order placed
     When I create an empty cart "john_cart" for customer "testCustomer"
     And I add 2 product "product1" to the cart "john_cart"
@@ -164,6 +181,10 @@ Feature: Customer using discount with usage limits in FO
     Then cart "john_cart" total with tax included should be '$40.00'
     And I select "US" address as delivery and invoice address for customer "testCustomer" in cart "john_cart"
     And I add order "john_order" from cart "john_cart" with "dummy_payment" payment method and "Payment accepted" order status
+    And discount "vip_discount2" should have the following properties:
+      | total_quantity          | 1 |
+      | quantity_per_user       | 1 |
+      | quantity_used_in_orders | 1 |
     # Now Jane's cart + discount
     When I create an empty cart "jane_cart" for customer "testCustomer2"
     And I add 2 product "product1" to the cart "jane_cart"
@@ -183,8 +204,9 @@ Feature: Customer using discount with usage limits in FO
       | quantity_per_user        | 1                   |
       | minimum_product_quantity | 0                   |
     And discount "vip_discount4" should have the following properties:
-      | total_quantity    | null |
-      | quantity_per_user | 1    |
+      | total_quantity          | null |
+      | quantity_per_user       | 1    |
+      | quantity_used_in_orders | 0    |
     # First Johh's cart + discount with order placed
     And I create an empty cart "john_cart3" for customer "testCustomer"
     And I add 2 product "product1" to the cart "john_cart3"
@@ -193,6 +215,10 @@ Feature: Customer using discount with usage limits in FO
     Then cart "john_cart3" total with tax included should be '$40.00'
     And I select "US" address as delivery and invoice address for customer "testCustomer" in cart "john_cart3"
     And I add order "john_order1" from cart "john_cart3" with "dummy_payment" payment method and "Payment accepted" order status
+    And discount "vip_discount4" should have the following properties:
+      | total_quantity          | null |
+      | quantity_per_user       | 1    |
+      | quantity_used_in_orders | 1    |
     # Second John's cart with discount already used before
     When I create an empty cart "john_cart2" for customer "testCustomer"
     And I add 2 product "product1" to the cart "john_cart2"
@@ -218,8 +244,9 @@ Feature: Customer using discount with usage limits in FO
       | quantity_per_user        | null                |
       | minimum_product_quantity | 0                   |
     And discount "vip_discount3" should have the following properties:
-      | total_quantity    | 10   |
-      | quantity_per_user | null |
+      | total_quantity          | 10   |
+      | quantity_per_user       | null |
+      | quantity_used_in_orders | 0    |
     # First Johh's cart + discount with order placed
     And I create an empty cart "john_cart1" for customer "testCustomer"
     And I add 2 product "product1" to the cart "john_cart1"
@@ -228,6 +255,10 @@ Feature: Customer using discount with usage limits in FO
     Then cart "john_cart1" total with tax included should be '$40.00'
     And I select "US" address as delivery and invoice address for customer "testCustomer" in cart "john_cart1"
     And I add order "john_order1" from cart "john_cart1" with "dummy_payment" payment method and "Payment accepted" order status
+    And discount "vip_discount3" should have the following properties:
+      | total_quantity          | 10   |
+      | quantity_per_user       | null |
+      | quantity_used_in_orders | 1    |
     # Second John's cart with discount already used before
     When I create an empty cart "john_cart2" for customer "testCustomer"
     And I add 2 product "product1" to the cart "john_cart2"

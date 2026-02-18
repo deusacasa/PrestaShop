@@ -37,6 +37,7 @@ class GetDiscountForEditingHandler implements GetDiscountForEditingHandlerInterf
         $countryIds = $this->discountRepository->getCountriesIds($query->getDiscountId());
         $customerGroupIds = $this->discountRepository->getCustomerGroupsIds($query->getDiscountId());
         $compatibleDiscountTypeIds = $this->discountTypeRepository->getCompatibleTypesIdsForDiscount($query->getDiscountId()->getValue());
+        $quantityUsedInOrders = $this->discountRepository->getQuantityUsedInOrders($query->getDiscountId());
 
         return new DiscountForEditing(
             $query->getDiscountId()->getValue(),
@@ -45,7 +46,8 @@ class GetDiscountForEditingHandler implements GetDiscountForEditingHandlerInterf
             $cartRule->active,
             new DateTimeImmutable($cartRule->date_from),
             new DateTimeImmutable($cartRule->date_to),
-            $cartRule->quantity,
+            $cartRule->total_quantity,
+            $quantityUsedInOrders,
             $cartRule->quantity_per_user,
             $cartRule->description,
             $cartRule->code,

@@ -58,8 +58,8 @@ class DiscountFiller
             $updatableProperties[] = 'id_customer';
         }
         if ($command->isDirty('totalQuantity')) {
-            $cartRule->quantity = $command->getTotalQuantity();
-            $updatableProperties[] = 'quantity';
+            $cartRule->total_quantity = $command->getTotalQuantity();
+            $updatableProperties[] = 'total_quantity';
         }
         if ($command->isDirty('quantityPerUser')) {
             $cartRule->quantity_per_user = $command->getQuantityPerUser();

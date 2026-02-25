@@ -24,10 +24,13 @@ class DiscountInformationType extends TranslatorAwareType
     public function buildForm(FormBuilderInterface $builder, array $options)
     {
         $discountType = $options['discount_type'];
+        $discountTypeName = $this->getDiscountTypeName($discountType, $options['available_discount_types']);
         $builder
             ->add('discount_type', TextPreviewType::class, [
                 'data' => $discountType,
-                'label' => $this->trans('Discount Type', 'Admin.Catalog.Feature'),
+                'label' => $this->trans('Discount type', 'Admin.Catalog.Feature'),
+                'preview_class' => 'badge rounded discount-type-badge badge-light-info',
+                'prefix' => $discountTypeName,
                 'required' => false,
             ])
             ->add('names', TranslatableType::class, [
@@ -87,11 +90,24 @@ class DiscountInformationType extends TranslatorAwareType
         $resolver->setAllowedTypes('discount_type', ['string']);
         $resolver->setDefaults([
             'label' => $this->trans('Discount information', 'Admin.Catalog.Feature'),
+            'available_discount_types' => [],
         ]);
+        $resolver->setAllowedTypes('available_discount_types', ['array']);
     }
 
     public function getParent()
     {
         return CardType::class;
+    }
+
+    private function getDiscountTypeName(string $discountType, array $availableDiscountTypes): string
+    {
+        foreach ($availableDiscountTypes as $availableType) {
+            if ($availableType['discount_type'] === $discountType) {
+                return $availableType['name'];
+            }
+        }
+
+        return $discountType;
     }
 }

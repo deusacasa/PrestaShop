@@ -100,7 +100,7 @@ final class DiscountGridDefinitionFactory extends AbstractGridDefinitionFactory 
                     ->setOptions([
                         'field' => 'discount_type_name',
                         'alignment' => 'left',
-                        // 'badge_type' => 'info',
+                        'badge_type' => 'light-info',
                     ])
             )
             ->add(

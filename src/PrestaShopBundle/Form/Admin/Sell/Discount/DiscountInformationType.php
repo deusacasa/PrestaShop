@@ -31,7 +31,7 @@ class DiscountInformationType extends TranslatorAwareType
                 'required' => false,
             ])
             ->add('names', TranslatableType::class, [
-                'label' => $this->trans('Discount Name', 'Admin.Catalog.Feature'),
+                'label' => $this->trans('Discount name', 'Admin.Catalog.Feature'),
                 'label_help_box' => $this->trans('This will be displayed in the cart summary, as well as on the invoice.', 'Admin.Catalog.Help'),
                 'required' => true,
                 'type' => TextType::class,

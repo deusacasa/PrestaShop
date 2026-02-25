@@ -55,7 +55,7 @@ class DiscountPeriodType extends TranslatorAwareType
     {
         parent::configureOptions($resolver);
         $resolver->setDefaults([
-            'label' => $this->trans('Select a Period', 'Admin.Catalog.Feature'),
+            'label' => $this->trans('Select a period', 'Admin.Catalog.Feature'),
             'required' => false,
         ]);
     }

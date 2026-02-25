@@ -89,7 +89,7 @@ final class DiscountGridDefinitionFactory extends AbstractGridDefinitionFactory 
             )
             ->add(
                 (new DataColumn('name'))
-                    ->setName($this->trans('Discount Name', [], 'Admin.Global'))
+                    ->setName($this->trans('Discount name', [], 'Admin.Global'))
                     ->setOptions([
                         'field' => 'name',
                     ])
@@ -128,7 +128,7 @@ final class DiscountGridDefinitionFactory extends AbstractGridDefinitionFactory 
             )
             ->add(
                 (new DataColumn('date_to'))
-                    ->setName($this->trans('Expiration date', [], 'Admin.Catalog.Feature'))
+                    ->setName($this->trans('End date', [], 'Admin.Catalog.Feature'))
                     ->setOptions([
                         'field' => 'date_to',
                         'sortable' => true,

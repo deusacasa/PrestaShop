@@ -31,9 +31,6 @@ class CurrencyMoneyType extends AbstractType
             ->add('amount', MoneyType::class, [
                 'scale' => $options['scale'],
                 'currency' => $this->currencyDataProvider->getDefaultCurrencyIsoCode(),
-                'attr' => [
-                    'data-currency' => $this->currencyDataProvider->getDefaultCurrencySymbol(),
-                ],
                 'default_empty_data' => 0,
             ])
             ->add('currency', ChoiceType::class, [

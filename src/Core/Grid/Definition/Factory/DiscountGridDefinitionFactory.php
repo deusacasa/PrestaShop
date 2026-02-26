@@ -215,6 +215,16 @@ final class DiscountGridDefinitionFactory extends AbstractGridDefinitionFactory 
                     ->setAssociatedColumn('name')
             )
             ->add(
+                (new Filter('code', TextType::class))
+                    ->setTypeOptions([
+                        'required' => false,
+                        'attr' => [
+                            'placeholder' => $this->trans('Code', [], 'Admin.Global'),
+                        ],
+                    ])
+                    ->setAssociatedColumn('code')
+            )
+            ->add(
                 (new Filter('discount_type', DiscountTypeChoiceType::class))
                     ->setAssociatedColumn('discount_type')
             )

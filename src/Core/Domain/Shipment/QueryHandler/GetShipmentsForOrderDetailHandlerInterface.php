@@ -15,8 +15,6 @@ use PrestaShop\PrestaShop\Core\Domain\Shipment\QueryResult\ShipmentForOrderDetai
 interface GetShipmentsForOrderDetailHandlerInterface
 {
     /**
-     * @param GetShipmentsForOrderDetail $query
-     *
      * @return ShipmentForOrderDetail[]
      */
     public function handle(GetShipmentsForOrderDetail $query);

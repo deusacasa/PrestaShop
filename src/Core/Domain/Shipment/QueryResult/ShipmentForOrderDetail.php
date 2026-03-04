@@ -23,13 +23,19 @@ class ShipmentForOrderDetail
     }
 
     /**
-     * @return string
+     * @return int
      */
-    public function getQuantity(): string
+    public function getQuantity(): int
     {
         return $this->quantity;
     }
 
+    /**
+     * @return array{
+     *     shipment_id: int,
+     *     quantity: int,
+     * }
+     */
     public function toArray(): array
     {
         return [

@@ -199,6 +199,7 @@ CREATE TABLE `PREFIX_cart_rule` (
   `date_upd` datetime NOT NULL,
   `id_cart_rule_type` int(10) unsigned DEFAULT NULL,
   `minimum_product_quantity` int(10) unsigned NOT NULL DEFAULT 0,
+  `total_quantity` int(10) unsigned DEFAULT NULL,
   PRIMARY KEY (`id_cart_rule`),
   KEY `id_customer` (
     `id_customer`, `active`, `date_to`

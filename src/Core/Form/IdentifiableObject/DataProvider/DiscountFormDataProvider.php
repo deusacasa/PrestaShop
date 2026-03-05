@@ -89,6 +89,11 @@ class DiscountFormDataProvider implements FormDataProviderInterface
                     'code' => '',
                 ],
                 'quantity_total' => null,
+                'usage' => [
+                    'quantity_used' => 0,
+                    'total_quantity' => null,
+                    'remaining_quantity' => null,
+                ],
                 'quantity_per_customer' => null,
                 'compatibility' => [],
                 'priority' => 1,
@@ -218,6 +223,11 @@ class DiscountFormDataProvider implements FormDataProviderInterface
                     'code' => $discountForEditing->getCode(),
                 ],
                 'quantity_total' => $discountForEditing->getTotalQuantity(),
+                'usage' => [
+                    'quantity_used' => $discountForEditing->getQuantityUsedInOrders(),
+                    'total_quantity' => $discountForEditing->getTotalQuantity(),
+                    'remaining_quantity' => $discountForEditing->getRemainingQuantity(),
+                ],
                 'quantity_per_customer' => $discountForEditing->getQuantityPerUser(),
                 'compatibility' => $discountForEditing->getCompatibleDiscountTypeIds(),
                 'priority' => $discountForEditing->getPriority(),

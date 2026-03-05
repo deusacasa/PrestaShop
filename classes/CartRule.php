@@ -49,6 +49,7 @@ class CartRuleCore extends ObjectModel
     public $date_to;
     public $description;
     public $quantity = 1;
+    public ?int $total_quantity = null;
     public $quantity_per_user = 1;
     public $priority = 1;
     /** @var bool */
@@ -96,7 +97,7 @@ class CartRuleCore extends ObjectModel
     public $date_upd;
     public $id_cart_rule_type;
 
-    protected ?FeatureFlagStateCheckerInterface $featureFlagManager = null;
+    protected static ?FeatureFlagStateCheckerInterface $featureFlagManager = null;
 
     protected static $cartAmountCache = [];
 
@@ -113,6 +114,7 @@ class CartRuleCore extends ObjectModel
             'date_to' => ['type' => self::TYPE_DATE, 'validate' => 'isDate', 'required' => true],
             'description' => ['type' => self::TYPE_STRING, 'validate' => 'isCleanHtml', 'size' => DiscountSettings::MAX_DESCRIPTION_LENGTH],
             'quantity' => ['type' => self::TYPE_INT, 'allow_null' => true, 'validate' => 'isUnsignedInt'],
+            'total_quantity' => ['type' => self::TYPE_INT, 'allow_null' => true, 'validate' => 'isUnsignedInt'],
             'quantity_per_user' => ['type' => self::TYPE_INT, 'allow_null' => true, 'validate' => 'isUnsignedInt'],
             'priority' => ['type' => self::TYPE_INT, 'validate' => 'isUnsignedInt'],
             'partial_use' => ['type' => self::TYPE_BOOL, 'validate' => 'isBool'],
@@ -181,6 +183,7 @@ class CartRuleCore extends ObjectModel
     public static function resetStaticCache()
     {
         static::$cartAmountCache = [];
+        static::$featureFlagManager = null;
     }
 
     /**
@@ -1023,7 +1026,7 @@ class CartRuleCore extends ObjectModel
         }
 
         // This part introduces the new business rules for the discount rework they are only taking effect when the discount feature flag is enabled
-        if ($this->isDiscountFeatureFlagEnabled()) {
+        if (self::isDiscountFeatureFlagEnabled()) {
             // Use DiscountApplicationService to determine which discounts to apply and their priority order
             $existingCartRuleIds = array_filter(
                 array_column($otherCartRules, 'id_cart_rule'),
@@ -1493,7 +1496,7 @@ class CartRuleCore extends ObjectModel
 
         if (in_array($filter, [CartRule::FILTER_ACTION_ALL, CartRule::FILTER_ACTION_ALL_NOCAP, CartRule::FILTER_ACTION_REDUCTION])) {
             $order_package_products_total = 0;
-            if ($this->isDiscountFeatureFlagEnabled()) {
+            if (self::isDiscountFeatureFlagEnabled()) {
                 if ($this->getType() === DiscountType::ORDER_LEVEL && $this->reduction_percent > 0.00 && $this->reduction_product == 0) {
                     $order_products_total = $context->cart->getOrderTotal($use_tax, Cart::ONLY_PRODUCTS, $package_products);
                     $order_shipping_total = $context->cart->getOrderTotal($use_tax, Cart::ONLY_SHIPPING, $package_products);
@@ -1556,7 +1559,7 @@ class CartRuleCore extends ObjectModel
                 if ($cheapestProduct) {
                     $cheapestProductPrice = $use_tax ? $cheapestProduct['price_with_reduction'] : $cheapestProduct['price_with_reduction_without_tax'];
                     // For product level discount, the percent discount is applied on all targeted products
-                    if ($this->isDiscountFeatureFlagEnabled() && $this->getType() === DiscountType::PRODUCT_LEVEL) {
+                    if (self::isDiscountFeatureFlagEnabled() && $this->getType() === DiscountType::PRODUCT_LEVEL) {
                         $reduction_value += $cheapestProduct['cart_quantity'] * $cheapestProductPrice * $this->reduction_percent / 100;
                     } else {
                         $reduction_value += $cheapestProductPrice * $this->reduction_percent / 100;
@@ -1617,7 +1620,7 @@ class CartRuleCore extends ObjectModel
                 }
 
                 // Special rule for product_level discount that are able to handle cheapest product and product segments
-                if ($this->isDiscountFeatureFlagEnabled() && $this->getType() === DiscountType::PRODUCT_LEVEL && ($this->reduction_product == -1 || $this->reduction_product == -2)) {
+                if (self::isDiscountFeatureFlagEnabled() && $this->getType() === DiscountType::PRODUCT_LEVEL && ($this->reduction_product == -1 || $this->reduction_product == -2)) {
                     // Find matching products
                     if ($this->reduction_product == -1) {
                         $cheapestProduct = $this->getCheapestProduct($all_products, $package_products, $use_tax);
@@ -1682,7 +1685,7 @@ class CartRuleCore extends ObjectModel
 
                         // The reduction cannot exceed the products total, except when we do not want it to be limited (for the partial use calculation)
                         if ($filter != CartRule::FILTER_ACTION_ALL_NOCAP) {
-                            if ($this->isDiscountFeatureFlagEnabled() && $this->getType() === DiscountType::ORDER_LEVEL) {
+                            if (self::isDiscountFeatureFlagEnabled() && $this->getType() === DiscountType::ORDER_LEVEL) {
                                 $max_reduction_amount = $this->reduction_tax
                                     ? $cart_amount_ti + $context->cart->getOrderTotal(true, Cart::ONLY_SHIPPING, $package_products)
                                     : $cart_amount_te + $context->cart->getOrderTotal(false, Cart::ONLY_SHIPPING, $package_products);
@@ -1738,7 +1741,7 @@ class CartRuleCore extends ObjectModel
                         $current_cart_amount = max($current_cart_amount - (float) $previous_reduction_amount, 0);
                     }
 
-                    if ($this->isDiscountFeatureFlagEnabled() && $this->getType() === DiscountType::ORDER_LEVEL) {
+                    if (self::isDiscountFeatureFlagEnabled() && $this->getType() === DiscountType::ORDER_LEVEL) {
                         $current_cart_amount += $this->reduction_tax
                             ? $context->cart->getOrderTotal(true, Cart::ONLY_SHIPPING, $package_products)
                             : $context->cart->getOrderTotal(false, Cart::ONLY_SHIPPING, $package_products);
@@ -1992,7 +1995,7 @@ class CartRuleCore extends ObjectModel
 		WHERE cr.active = 1
 		AND cr.code = ""
 		AND (cr.quantity > 0 OR cr.quantity is null)
-		AND NOW() BETWEEN cr.date_from AND cr.date_to
+        AND NOW() BETWEEN cr.date_from AND cr.date_to
 		AND (
 			cr.id_customer = 0
 			' . (Validate::isLoadedObject($context->customer) ? 'OR cr.id_customer = ' . (int) $context->cart->id_customer : '') . '
@@ -2197,23 +2200,23 @@ class CartRuleCore extends ObjectModel
         return $return;
     }
 
-    protected function isDiscountFeatureFlagEnabled(): bool
+    protected static function isDiscountFeatureFlagEnabled(): bool
     {
-        return $this->getFeatureFlagManager() !== null && $this->getFeatureFlagManager()->isEnabled(FeatureFlagSettings::FEATURE_FLAG_DISCOUNT);
+        return self::getFeatureFlagManager() !== null && self::getFeatureFlagManager()->isEnabled(FeatureFlagSettings::FEATURE_FLAG_DISCOUNT);
     }
 
-    protected function getFeatureFlagManager(): ?FeatureFlagStateCheckerInterface
+    protected static function getFeatureFlagManager(): ?FeatureFlagStateCheckerInterface
     {
-        if (!$this->featureFlagManager) {
+        if (!self::$featureFlagManager) {
             try {
                 $containerFinder = new ContainerFinder(Context::getContext());
                 $container = $containerFinder->getContainer();
-                $this->featureFlagManager = $container->get(FeatureFlagStateCheckerInterface::class);
+                self::$featureFlagManager = $container->get(FeatureFlagStateCheckerInterface::class);
             } catch (Throwable) {
                 // Do nothing, just here for resilience
             }
         }
 
-        return $this->featureFlagManager;
+        return self::$featureFlagManager;
     }
 }

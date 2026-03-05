@@ -37,6 +37,8 @@ class DiscountBuilder
         $cartRule->id_customer = $command->getCustomerId()?->getValue();
         $cartRule->date_from = $validFrom->format(DateTimeUtil::DEFAULT_DATETIME_FORMAT);
         $cartRule->date_to = $validTo->format(DateTimeUtil::DEFAULT_DATETIME_FORMAT);
+        // We are initializing the discount so the remaining quantity and the total quantity are the same thing
+        $cartRule->total_quantity = $command->getTotalQuantity();
         $cartRule->quantity = $command->getTotalQuantity();
         $cartRule->quantity_per_user = $command->getQuantityPerUser();
         $cartRule->reduction_amount = 0;

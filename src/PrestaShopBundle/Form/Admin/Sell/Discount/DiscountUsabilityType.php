@@ -59,6 +59,9 @@ class DiscountUsabilityType extends TranslatorAwareType
                     new Assert\GreaterThanOrEqual(0),
                 ],
             ])
+            ->add('usage', DiscountUsagePreviewType::class, [
+                'label' => $this->trans('Usage', 'Admin.Catalog.Feature'),
+            ])
             ->add('quantity_per_customer', IntegerType::class, [
                 'required' => false,
                 'label' => $this->trans('Select usage limits per customer', 'Admin.Catalog.Feature'),

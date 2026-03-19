@@ -1,6 +1,6 @@
 admin_business_entities_list:
   path: /
-  methods: [GET]
+  methods: [ GET ]
   defaults:
     _controller: PrestaShopBundle\Controller\Admin\Sell\BusinessEntity\BusinessEntitiesController::listAction
     _legacy_controller: AdminBusinessEntities

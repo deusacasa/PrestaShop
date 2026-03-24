@@ -48,11 +48,10 @@ class AdminAccessControllerCore extends AdminController
             $accesses[$profile['id_profile']] = Profile::getProfileAccesses($profile['id_profile']);
         }
 
+        $isImprovedB2BEnabled = false;
         if ($this->getContainer()->has(FeatureFlagStateCheckerInterface::class)) {
             $featureFlagChecker = $this->get(FeatureFlagStateCheckerInterface::class);
             $isImprovedB2BEnabled = $featureFlagChecker->isEnabled(FeatureFlagSettings::FEATURE_FLAG_IMPROVED_B2B);
-        } else {
-            $isImprovedB2BEnabled = false;
         }
 
         // Deleted id_tab that do not have access

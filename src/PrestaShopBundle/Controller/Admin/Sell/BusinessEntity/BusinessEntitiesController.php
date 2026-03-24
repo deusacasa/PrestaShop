@@ -15,9 +15,6 @@ use Symfony\Component\HttpFoundation\Response;
  */
 class BusinessEntitiesController extends PrestaShopAdminController
 {
-    /**
-     * @return Response
-     */
     #[AdminSecurity("is_granted('read', 'AdminBusinessEntities')")]
     public function listAction(): Response
     {

@@ -1,6 +1,5 @@
 services:
   _defaults:
-    public: false
     autowire: true
 
   PrestaShop\PrestaShop\Core\B2b\B2bFeature:

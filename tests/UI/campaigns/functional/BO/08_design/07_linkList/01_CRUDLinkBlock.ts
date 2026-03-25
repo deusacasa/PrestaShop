@@ -1,18 +1,19 @@
 // Import utils
 import testContext from '@utils/testContext';
-
-// Import pages
-
 import {expect} from 'chai';
 import type {BrowserContext, Page} from 'playwright';
+
 import {
+  // Import BO pages
   boDashboardPage,
   boLoginPage,
   boDesignLinkListPage,
   boDesignLinkListCreatePage,
+  // Import FO pages
+  foHummingbirdHomePage,
+  // Import data
   dataHooks,
   FakerLinkWidget,
-  foClassicHomePage,
   type LinkWidgetPage,
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
@@ -28,6 +29,7 @@ describe('BO - Design - Link block : CRUD link block', async () => {
   let browserContext: BrowserContext;
   let page: Page;
   let numberOfLinkWidgetInFooter: number = 0;
+  let linkId: number = 1;
   const linkBlockData: FakerLinkWidget = new FakerLinkWidget({
     name: 'Footer test block',
     frName: 'Test block dans le footer',
@@ -116,6 +118,13 @@ describe('BO - Design - Link block : CRUD link block', async () => {
       const numberOfLinkWidget = await boDesignLinkListPage.getNumberOfElementInGrid(page, dataHooks.displayFooter.name);
       expect(numberOfLinkWidget).to.equal(numberOfLinkWidgetInFooter + 1);
     });
+
+    it('should get the Id of the created link', async function () {
+      await testContext.addContextItem(this, 'testIdentifier', 'getID', baseContext);
+
+      linkId = await boDesignLinkListPage.getLinkId(page, dataHooks.displayFooter.name, numberOfLinkWidgetInFooter + 1);
+      expect(linkId).not.equal(1);
+    });
   });
 
   describe('Go to FO and check existence of new link Block', async () => {
@@ -125,19 +134,19 @@ describe('BO - Design - Link block : CRUD link block', async () => {
       // View shop
       page = await boDesignLinkListPage.viewMyShop(page);
       // Change FO language
-      await foClassicHomePage.changeLanguage(page, 'en');
+      await foHummingbirdHomePage.changeLanguage(page, 'en');
 
-      const pageTitle = await foClassicHomePage.getPageTitle(page);
-      expect(pageTitle).to.contains(foClassicHomePage.pageTitle);
+      const pageTitle = await foHummingbirdHomePage.getPageTitle(page);
+      expect(pageTitle).to.contains(foHummingbirdHomePage.pageTitle);
     });
 
     it('should check link block in the footer of home page', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'checkLinBlockInFO', baseContext);
 
-      const title = await foClassicHomePage.getFooterLinksBlockTitle(page, numberOfLinkWidgetInFooter + 1);
+      const title = await foHummingbirdHomePage.getFooterLinksBlockTitle(page, linkId);
       expect(title).to.contains(linkBlockData.name);
 
-      const linksTextContent = await foClassicHomePage.getFooterLinksTextContent(page, numberOfLinkWidgetInFooter + 1);
+      const linksTextContent = await foHummingbirdHomePage.getFooterLinksTextContent(page, linkId);
       await Promise.all([
         expect(linksTextContent).to.include.members(linkBlockData.contentPages),
         expect(linksTextContent).to.include.members(linkBlockData.productsPages),
@@ -150,7 +159,7 @@ describe('BO - Design - Link block : CRUD link block', async () => {
       await testContext.addContextItem(this, 'testIdentifier', 'goBackToBO', baseContext);
 
       // Go back to BO
-      page = await foClassicHomePage.closePage(browserContext, page, 0);
+      page = await foHummingbirdHomePage.closePage(browserContext, page, 0);
 
       const pageTitle = await boDesignLinkListPage.getPageTitle(page);
       expect(pageTitle).to.contains(boDesignLinkListPage.pageTitle);
@@ -161,7 +170,7 @@ describe('BO - Design - Link block : CRUD link block', async () => {
     it('should click on edit block product', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'goToUpdatePage', baseContext);
 
-      await boDesignLinkListPage.goToEditBlock(page, dataHooks.displayFooter.name, 3);
+      await boDesignLinkListPage.goToEditBlock(page, dataHooks.displayFooter.name, numberOfLinkWidgetInFooter + 1);
 
       const pageTitle = await boDesignLinkListCreatePage.getPageTitle(page);
       expect(pageTitle).to.contains(boDesignLinkListCreatePage.pageTitle);
@@ -185,19 +194,19 @@ describe('BO - Design - Link block : CRUD link block', async () => {
       // View shop
       page = await boDesignLinkListPage.viewMyShop(page);
       // Change FO language
-      await foClassicHomePage.changeLanguage(page, 'en');
+      await foHummingbirdHomePage.changeLanguage(page, 'en');
 
-      const pageTitle = await foClassicHomePage.getPageTitle(page);
-      expect(pageTitle).to.contains(foClassicHomePage.pageTitle);
+      const pageTitle = await foHummingbirdHomePage.getPageTitle(page);
+      expect(pageTitle).to.contains(foHummingbirdHomePage.pageTitle);
     });
 
     it('should check link block before the footer of home page', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'checkLinBlockInFO2', baseContext);
 
-      const linksTitle = await foClassicHomePage.getFooterLinksBlockTitle(page, 1);
-      await expect(linksTitle).to.equal(updateLinkBlockData.name);
+      const linksTitle = await foHummingbirdHomePage.getFooterLinksBlockTitle(page, linkId);
+      await expect(linksTitle).to.contains(updateLinkBlockData.name);
 
-      const linksTextContent = await foClassicHomePage.getFooterLinksTextContent(page, 1);
+      const linksTextContent = await foHummingbirdHomePage.getFooterLinksTextContent(page, linkId);
       await Promise.all([
         expect(linksTextContent).to.include.members(updateLinkBlockData.contentPages),
         expect(linksTextContent).to.include.members(updateLinkBlockData.productsPages),
@@ -211,7 +220,7 @@ describe('BO - Design - Link block : CRUD link block', async () => {
       await testContext.addContextItem(this, 'testIdentifier', 'goBackToBO2', baseContext);
 
       // Go back to BO
-      page = await foClassicHomePage.closePage(browserContext, page, 0);
+      page = await foHummingbirdHomePage.closePage(browserContext, page, 0);
 
       const pageTitle = await boDesignLinkListPage.getPageTitle(page);
       expect(pageTitle).to.contains(boDesignLinkListPage.pageTitle);
@@ -255,16 +264,16 @@ describe('BO - Design - Link block : CRUD link block', async () => {
       // View shop
       page = await boDesignLinkListPage.viewMyShop(page);
       // Change FO language
-      await foClassicHomePage.changeLanguage(page, 'en');
+      await foHummingbirdHomePage.changeLanguage(page, 'en');
 
-      const pageTitle = await foClassicHomePage.getPageTitle(page);
-      expect(pageTitle).to.contains(foClassicHomePage.pageTitle);
+      const pageTitle = await foHummingbirdHomePage.getPageTitle(page);
+      expect(pageTitle).to.contains(foHummingbirdHomePage.pageTitle);
     });
 
     it('should check the first link block in the footer of home page', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'checkLinBlockInFO3', baseContext);
 
-      const linksTitle = await foClassicHomePage.getFooterLinksBlockTitle(page, 1);
+      const linksTitle = await foHummingbirdHomePage.getFooterLinksBlockTitle(page, 1);
       await expect(linksTitle).to.not.equal(updateLinkBlockData.name);
     });
   });

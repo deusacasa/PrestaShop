@@ -7,6 +7,7 @@
 namespace PrestaShopBundle\Translation;
 
 use Exception;
+use PrestaShopLogger;
 use PrestaShop\PrestaShop\Adapter\Localization\LegacyTranslator;
 use Symfony\Component\Translation\Exception\InvalidArgumentException;
 
@@ -41,8 +42,11 @@ trait PrestaShopTranslatorTrait
 
         $translated = parent::trans($id, $isSprintf ? [] : $parameters, $this->normalizeDomain($domain), $locale);
 
-        if ($isSprintf) {
+        try {
             $translated = vsprintf($translated, $parameters);
+        } catch (\ValueError $e) {
+            $log_message = "Translation error: message={$translated}, parameters=" . count($parameters);
+            PrestaShopLogger::addLog($log_message, PrestaShopLogger::LOG_SEVERITY_LEVEL_WARNING, $e->getCode());
         }
 
         return $translated;

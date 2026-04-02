@@ -232,3 +232,10 @@ docker-compose.override.yml
 
 # config vscode
 .hintrc
+
+# Eclipse IDE
+/.buildpath
+/.project
+
+# Environment data
+/.env

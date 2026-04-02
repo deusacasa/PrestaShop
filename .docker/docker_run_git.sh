@@ -115,6 +115,15 @@ else
   echo "error_log=/var/www/html/var/logs/php.log" >> /usr/local/etc/php/php.ini
 fi
 
+echo "\n* Setting up permissions..."
+        
+chmod -R 777 /var/www/html/var/cache
+chmod -R 777 /var/www/html/var/logs
+chmod -R 777 /var/www/html/app/config
+chmod -R 777 /var/www/html/upload
+chmod -R 777 /var/www/html/download
+chmod -R 777 /var/www/html/img
+
 if [ ! -f ./app/config/parameters.php ]; then
     if [ $PS_INSTALL_AUTO = 1 ]; then
 

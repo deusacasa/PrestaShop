@@ -190,7 +190,7 @@ describe('BO - Catalog - Discounts : Minimum purchase amount (On cart amount)', 
       expect(errorMessage).to.contains(boDiscountsCreatePage.errorMessageNameRequired);
     });
 
-    it('should create a discount with a product quantity equal to zero', async function () {
+    it('should create a discount with a minimum purchase value = 0 euro and check the error', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'createDiscount_2', baseContext);
 
       let errorMessage = await boDiscountsCreatePage.createDiscount(page, discountPurchaseAmountZero);

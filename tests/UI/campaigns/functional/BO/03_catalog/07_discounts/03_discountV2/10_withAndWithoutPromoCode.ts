@@ -148,7 +148,7 @@ describe('BO - Catalog - Discounts : Create a discount that applies automaticall
     });
 
     it('should create a discount without code and check the success message', async function () {
-      await testContext.addContextItem(this, 'testIdentifier', 'createDiscountWithCode', baseContext);
+      await testContext.addContextItem(this, 'testIdentifier', 'createDiscountWithoutCode', baseContext);
 
       const errorMessage = await boDiscountsCreatePage.createDiscount(page, discountData);
       expect(errorMessage).to.contains(boDiscountsCreatePage.successfulCreationMessage);
@@ -211,7 +211,7 @@ describe('BO - Catalog - Discounts : Create a discount that applies automaticall
     });
 
     it('should check the Total (tax incl.) after the discount', async function () {
-      await testContext.addContextItem(this, 'testIdentifier', 'checkTotalAfterDiscount1', baseContext);
+      await testContext.addContextItem(this, 'testIdentifier', 'checkTotalAfterDiscount_1', baseContext);
 
       const discount = parseFloat(discountData.discountValue.toString());
 
@@ -326,7 +326,7 @@ describe('BO - Catalog - Discounts : Create a discount that applies automaticall
     });
 
     it('should delete the product from the cart', async function () {
-      await testContext.addContextItem(this, 'testIdentifier', 'deleteProductFromCart_2', baseContext);
+      await testContext.addContextItem(this, 'testIdentifier', 'deleteProductFromCart_1', baseContext);
 
       await foHummingbirdCartPage.deleteProduct(page, 1);
 

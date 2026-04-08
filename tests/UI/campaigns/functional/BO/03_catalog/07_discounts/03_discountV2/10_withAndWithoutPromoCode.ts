@@ -317,7 +317,7 @@ describe('BO - Catalog - Discounts : Create a discount that applies automaticall
     });
 
     it('should check the Total (tax incl.) after the discount', async function () {
-      await testContext.addContextItem(this, 'testIdentifier', 'checkTotalAfterDiscount_1', baseContext);
+      await testContext.addContextItem(this, 'testIdentifier', 'checkTotalAfterDiscount_2', baseContext);
 
       const discount = parseFloat(editDiscountData.discountValue.toString());
 
@@ -435,7 +435,7 @@ describe('BO - Catalog - Discounts : Create a discount that applies automaticall
     });
 
     it('should check the Total (tax incl.) after the discount', async function () {
-      await testContext.addContextItem(this, 'testIdentifier', 'checkTotalAfterDiscount_2', baseContext);
+      await testContext.addContextItem(this, 'testIdentifier', 'checkTotalAfterDiscount_3', baseContext);
 
       const discount = parseFloat(discountRandomPromoCodeData.discountValue.toString());
 

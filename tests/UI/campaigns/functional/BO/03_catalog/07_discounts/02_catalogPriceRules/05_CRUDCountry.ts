@@ -44,6 +44,7 @@ describe('BO - Catalog - Discounts : CRUD country', async () => {
   });
   const editAddressData: FakerAddress = new FakerAddress({
     email: customerData.email,
+    state: 'Florida',
     country: 'United States',
   });
 

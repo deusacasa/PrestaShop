@@ -9,6 +9,7 @@ import {
   boDashboardPage,
   boLocalizationPage,
   boLoginPage,
+  boCurrenciesPage,
   // Import FO pages
   foHummingbirdCartPage,
   foHummingbirdSearchResultsPage,
@@ -23,6 +24,7 @@ import {
   FakerCustomer,
   FakerCatalogPriceRule,
   FakerAddress,
+  dataCurrencies,
   // Import type
   type BrowserContext,
   type ImportContent,
@@ -493,6 +495,56 @@ describe('BO - Catalog - Discounts : CRUD country', async () => {
 
       const deleteTextResult = await boCatalogPriceRulesPage.deleteCatalogPriceRule(page, editCatalogPriceRuleData2.name);
       expect(deleteTextResult).to.contains(boCatalogPriceRulesPage.successfulDeleteMessage);
+    });
+  });
+
+  describe('Delete currency added by importing localization pack', async () => {
+    it('should go to \'International > Localization\' page', async function () {
+      await testContext.addContextItem(this, 'testIdentifier', 'goToLocalizationPage_2', baseContext);
+
+      await boDashboardPage.goToSubMenu(
+        page,
+        boDashboardPage.internationalParentLink,
+        boDashboardPage.localizationLink,
+      );
+      await boLocalizationPage.closeSfToolBar(page);
+
+      const pageTitle = await boLocalizationPage.getPageTitle(page);
+      expect(pageTitle).to.contains(boLocalizationPage.pageTitle);
+    });
+
+    it('should go to currencies page', async function () {
+      await testContext.addContextItem(this, 'testIdentifier', 'goToCurrenciesPage', baseContext);
+
+      await boLocalizationPage.goToSubTabCurrencies(page);
+
+      const pageTitle = await boCurrenciesPage.getPageTitle(page);
+      expect(pageTitle).to.contains(boCurrenciesPage.pageTitle);
+    });
+
+    [dataCurrencies.aed.isoCode, dataCurrencies.usd.isoCode].forEach((arg: string, index: number) => {
+      it(`should filter by iso code of currency '${arg}'`, async function () {
+        await testContext.addContextItem(this, 'testIdentifier', `filterCurrencies_${index}`, baseContext);
+
+        await boCurrenciesPage.filterTable(page, 'input', 'iso_code', arg);
+
+        const textColumn = await boCurrenciesPage.getTextColumnFromTableCurrency(page, 1, 'iso_code');
+        expect(textColumn).to.contains(arg);
+      });
+
+      it('should delete currency', async function () {
+        await testContext.addContextItem(this, 'testIdentifier', `deleteCurrency_${index}`, baseContext);
+
+        const result = await boCurrenciesPage.deleteCurrency(page, 1);
+        expect(result).to.be.equal(boCurrenciesPage.successfulDeleteMessage);
+      });
+    });
+
+    it('should reset filters', async function () {
+      await testContext.addContextItem(this, 'testIdentifier', 'resetCurrencies', baseContext);
+
+      const numberOfCurrenciesAfterReset = await boCurrenciesPage.resetAndGetNumberOfLines(page);
+      expect(numberOfCurrenciesAfterReset).to.be.at.least(1);
     });
   });
 

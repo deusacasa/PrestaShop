@@ -1520,8 +1520,10 @@ class CategoryCore extends ObjectModel
     {
         $categories = explode('/', trim($path));
         $idParentCategory = false;
+        $selfPath = '';
 
         foreach ($categories as $categoryName) {
+            $selfPath = $selfPath ? ($selfPath . '/' . $categoryName) : $categoryName;
             if ($idParentCategory) {
                 $category = Category::searchByNameAndParentCategoryId($idLang, $categoryName, $idParentCategory);
             } else {
@@ -1530,7 +1532,7 @@ class CategoryCore extends ObjectModel
 
             if (!$category && $objectToCreate && $methodToCreate) {
                 call_user_func_array([$objectToCreate, $methodToCreate], [$idLang, $categoryName, $idParentCategory]);
-                $category = Category::searchByPath($idLang, $categoryName);
+                $category = Category::searchByPath($idLang, $selfPath);
             }
             if (isset($category['id_category']) && $category['id_category']) {
                 $idParentCategory = (int) $category['id_category'];
@@ -1994,13 +1996,12 @@ class CategoryCore extends ObjectModel
      * Check if current category is a child of shop root category.
      *
      * @param int $idCategory Category ID
-     * @param Shop $shop Shop object
      *
      * @return bool Indicates whether the current category is a child of the Shop root category
      */
     public static function inShopStatic($idCategory, ?Shop $shop = null)
     {
-        if (!$shop || !is_object($shop)) {
+        if (!$shop) {
             $shop = Context::getContext()->shop;
         }
 
@@ -2403,9 +2404,6 @@ class CategoryCore extends ObjectModel
      */
     public static function addToShop(array $categories, $idShop)
     {
-        if (!is_array($categories)) {
-            return false;
-        }
         $sql = 'INSERT INTO `' . _DB_PREFIX_ . 'category_shop` (`id_category`, `id_shop`) VALUES';
         $tabCategories = [];
         foreach ($categories as $idCategory) {

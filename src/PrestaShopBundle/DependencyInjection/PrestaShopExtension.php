@@ -7,8 +7,9 @@
 namespace PrestaShopBundle\DependencyInjection;
 
 use PrestaShop\PrestaShop\Adapter\Configuration;
-use PrestaShop\PrestaShop\Core\ConfigurationInterface;
 use PrestaShop\PrestaShop\Core\Http\CookieOptions;
+use PrestaShop\PrestaShop\Core\Import\Engine\EntityImporter\Product\ProductRowImporter;
+use PrestaShop\PrestaShop\Core\Import\Engine\EntityImporter\Product\Step\ProductRowStepInterface;
 use PrestaShop\PrestaShop\Core\Import\Engine\EntityImporterInterface;
 use PrestaShop\PrestaShop\Core\Import\Engine\EntityImporterRegistry;
 use PrestaShop\PrestaShop\Core\Security\OAuth2\AuthorisationServerInterface;
@@ -45,6 +46,13 @@ class PrestaShopExtension extends Extension implements PrependExtensionInterface
         // long as their definitions enable autoconfiguration)
         $container->registerForAutoconfiguration(EntityImporterInterface::class)
             ->addTag(EntityImporterRegistry::SERVICE_TAG)
+        ;
+
+        // Automatically tag product row steps (same mechanism: module services
+        // are collected too; an autoconfigured step without an explicit tag
+        // priority runs at 0, after every core step)
+        $container->registerForAutoconfiguration(ProductRowStepInterface::class)
+            ->addTag(ProductRowImporter::STEP_TAG)
         ;
     }
 
@@ -84,7 +92,6 @@ class PrestaShopExtension extends Extension implements PrependExtensionInterface
     protected function getCookieSameSite(): string
     {
         try {
-            /** @var ConfigurationInterface $configuration */
             $configuration = new Configuration();
             $cookieSamesite = $configuration->get('PS_COOKIE_SAMESITE');
             $cookieSamesite = match ($cookieSamesite) {
@@ -102,7 +109,6 @@ class PrestaShopExtension extends Extension implements PrependExtensionInterface
     protected function getAdminCookieLifetime(): int
     {
         try {
-            /** @var ConfigurationInterface $configuration */
             $configuration = new Configuration();
             $cookieLifetimeBo = (int) $configuration->get('PS_COOKIE_LIFETIME_BO');
             if (empty($cookieLifetimeBo) || $cookieLifetimeBo <= 0) {

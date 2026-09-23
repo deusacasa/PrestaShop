@@ -24,6 +24,7 @@ doctrine:
           1013: '%env(const:runtime:_PS_ALLOW_MULTI_STATEMENTS_QUERIES_)%'
 
   orm:
+    proxy_dir: '%kernel.cache_dir%/doctrine/orm/Proxies'
     auto_generate_proxy_classes: "%kernel.debug%"
     naming_strategy: prestashop.database.naming_strategy
     auto_mapping: true

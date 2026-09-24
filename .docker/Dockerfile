@@ -39,6 +39,18 @@ RUN if [ "$INSTALL_XDEBUG" = "true" ]; then \
     && echo "xdebug.client_host=host.docker.internal" >> /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini; \
 fi
 
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libmemcached-dev \
+    libmemcachedutil2 \
+    libssl-dev \
+    zlib1g-dev \
+    pkg-config \
+    build-essential
+
+RUN pecl channel-update pecl.php.net \
+    && printf "\n" | pecl install memcached \
+    && docker-php-ext-enable memcached
+
 COPY --link --chmod=755 .docker/docker_run_git.sh /tmp/
 COPY --link --chmod=755 .docker/wait-for-it.sh /tmp/
 COPY --link --chmod=755 .docker/install /var/www/html/.docker/install

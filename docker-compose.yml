@@ -17,6 +17,12 @@ services:
     networks:
       - prestashop-network
 
+  memcached:
+    image: memcached:alpine
+    command: ["memcached", "-m", "512"]
+    networks:
+    - prestashop-network
+
   prestashop-git:
     hostname: ${PS_HOSTNAME:-localhost}
     build:

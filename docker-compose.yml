@@ -20,6 +20,7 @@ services:
   memcached:
     image: memcached:alpine
     command: ["memcached", "-m", "512"]
+    restart: unless-stopped
     networks:
     - prestashop-network
 
@@ -63,6 +64,7 @@ services:
       - "${HTTPS_PORT:-8002}:443"
     depends_on:
       - mysql
+      - memcached
     volumes:
       - ./:/var/www/html
       - ../logistic:/var/www/html/modules/logistic

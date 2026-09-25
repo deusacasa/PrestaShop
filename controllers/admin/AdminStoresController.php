@@ -204,7 +204,7 @@ class AdminStoresControllerCore extends AdminController
                     'options' => [
                         'id' => 'id_state',
                         'name' => 'name',
-                        'query' => null,
+                        'query' => StateCore::getStatesByIdCountry($obj->id_country, $this->context->country->id),
                     ],
                 ],
                 [

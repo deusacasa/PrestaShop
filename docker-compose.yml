@@ -1,3 +1,5 @@
+version: '3.8'
+
 volumes:
   db-data:
 
@@ -10,19 +12,36 @@ services:
       - db-data:/var/lib/mysql
     command:
       - --mysql-native-password=ON
+      - --innodb-buffer-pool-size=256M
+      - --innodb-log-buffer-size=16M
+      - --max-connections=60
+      - --key-buffer-size=16M
+      - --performance-schema=OFF
     environment:
       MYSQL_ROOT_PASSWORD: ${DB_PASSWD:-prestashop}
       MYSQL_DATABASE: ${DB_NAME:-prestashop}
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '1.50'
+          memory: 600M
+        reservations:
+          memory: 300M
     networks:
       - prestashop-network
 
   memcached:
     image: memcached:alpine
-    command: ["memcached", "-m", "512"]
+    command: ["memcached", "-m", "128"]
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 160M
     networks:
-    - prestashop-network
+      - prestashop-network
 
   prestashop-git:
     hostname: ${PS_HOSTNAME:-localhost}
@@ -30,12 +49,12 @@ services:
       dockerfile: .docker/Dockerfile
       context: .
       args:
-        - VERSION=${VERSION:-8.1-apache}
-        - USER_ID=${USER_ID:-1000}
-        - GROUP_ID=${GROUP_ID:-1000}
-        - NODE_VERSION=${NODE_VERSION:-20.19.5}
-        - INSTALL_XDEBUG=${INSTALL_XDEBUG:-false}
-        - TIMEZONE=${TIMEZONE:-UTC}
+        VERSION: ${VERSION:-8.1-apache}
+        USER_ID: ${USER_ID:-1000}
+        GROUP_ID: ${GROUP_ID:-1000}
+        NODE_VERSION: ${NODE_VERSION:-20.19.5}
+        INSTALL_XDEBUG: ${INSTALL_XDEBUG:-false}
+        TIMEZONE: ${TIMEZONE:-UTC}
     environment:
       DISABLE_MAKE: ${DISABLE_MAKE:-0}
       PS_INSTALL_AUTO: ${PS_INSTALL_AUTO:-1}
@@ -48,7 +67,7 @@ services:
       PS_FOLDER_ADMIN: ${PS_FOLDER_ADMIN:-admin-dev}
       PS_COUNTRY: ${PS_COUNTRY:-fr}
       PS_LANGUAGE: ${PS_LANGUAGE:-en}
-      PS_DEV_MODE: ${PS_DEV_MODE:-1}
+      PS_DEV_MODE: ${PS_DEV_MODE:-0}
       PS_ENABLE_SSL: ${PS_ENABLE_SSL:-0}
       PS_ERASE_DB: ${PS_ERASE_DB:-0}
       PS_USE_DOCKER_MAILDEV: ${PS_USE_DOCKER_MAILDEV:-1}
@@ -65,6 +84,13 @@ services:
     depends_on:
       - mysql
       - memcached
+    deploy:
+      resources:
+        limits:
+          cpus: '2.00'
+          memory: 1024M
+        reservations:
+          memory: 512M
     volumes:
       - ./:/var/www/html
       - ../logistic:/var/www/html/modules/logistic

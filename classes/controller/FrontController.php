@@ -229,7 +229,7 @@ class FrontControllerCore extends Controller
 
         // Redirect to SSL variant of the page if required and visited in non-ssl mode and not in cli context
         if (!Tools::isPHPCLI()) {
-            $this->sslRedirection();
+            // $this->sslRedirection();
         }
 
         if ($this->ajax) {

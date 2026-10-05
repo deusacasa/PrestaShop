@@ -410,7 +410,7 @@ class ShopCore extends ObjectModel
             }
         } else {
             $shop = new Shop($id_shop);
-            if (!Validate::isLoadedObject($shop) || !$shop->active) {
+            if (false && (!Validate::isLoadedObject($shop) || !$shop->active)) {
                 // No shop found ... too bad, let's redirect to default shop
                 $default_shop = new Shop((int) Configuration::get('PS_SHOP_DEFAULT'));
 
@@ -427,7 +427,7 @@ class ShopCore extends ObjectModel
                 } else {
                     // Catch url with subdomain "www"
                     if (strpos($url, 'www.') === 0 && 'www.' . $_SERVER['HTTP_HOST'] === $url || $_SERVER['HTTP_HOST'] === 'www.' . $url) {
-                        $url .= $_SERVER['REQUEST_URI'];
+                       $url .= $_SERVER['REQUEST_URI'];
                     } else {
                         $url .= $default_shop->getBaseURI();
                     }

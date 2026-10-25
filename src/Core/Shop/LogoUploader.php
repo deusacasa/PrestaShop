@@ -158,6 +158,7 @@ class LogoUploader
             }
 
             Configuration::updateValue($fieldName, $logoName, false, $idShopGroup, $idShop);
+            // @phpstan-ignore function.resultUnused
             unlink($tmpName);
 
             return true;
@@ -173,7 +174,7 @@ class LogoUploader
             $idShopGroup = Shop::getContextShopGroupID();
             Shop::setContext(Shop::CONTEXT_ALL);
             $logoAll = Configuration::get($fieldName);
-            Shop::setContext(Shop::CONTEXT_GROUP);
+            Shop::setContext(Shop::CONTEXT_GROUP, $idShopGroup);
             $logoGroup = Configuration::get($fieldName);
             Shop::setContext(Shop::CONTEXT_SHOP, $idShop);
             $logoShop = Configuration::get($fieldName);
@@ -184,7 +185,7 @@ class LogoUploader
             $idShopGroup = Shop::getContextShopGroupID();
             Shop::setContext(Shop::CONTEXT_ALL);
             $logoAll = Configuration::get($fieldName);
-            Shop::setContext(Shop::CONTEXT_GROUP);
+            Shop::setContext(Shop::CONTEXT_GROUP, $idShopGroup);
             if ($logoAll != Configuration::get($fieldName)) {
                 @unlink($this->imageDirection . Configuration::get($fieldName));
             }

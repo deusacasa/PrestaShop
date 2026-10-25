@@ -9,14 +9,12 @@ declare(strict_types=1);
 namespace Tests\Integration\Behaviour\Features\Context\Domain;
 
 use Address;
-use AdminController;
 use Behat\Gherkin\Node\PyStringNode;
 use Behat\Gherkin\Node\TableNode;
 use Cart;
 use Configuration;
 use Context;
 use Currency;
-use FrontController;
 use Order;
 use OrderInvoice;
 use OrderState;
@@ -87,10 +85,11 @@ class OrderFeatureContext extends AbstractDomainFeatureContext
     public function before()
     {
         // needed because if no controller defined then CONTEXT_ALL is selected and exception is thrown
-        /** @var AdminController|FrontController $adminControllerTestDouble */
         $adminControllerTestDouble = new stdClass();
         $adminControllerTestDouble->controller_type = 'admin';
         $adminControllerTestDouble->php_self = 'dummyTestDouble';
+        // a duck-typed stdClass double is enough for the legacy context here
+        // @phpstan-ignore assign.propertyType
         Context::getContext()->controller = $adminControllerTestDouble;
     }
 
@@ -206,6 +205,18 @@ class OrderFeatureContext extends AbstractDomainFeatureContext
             if (isset($data['free_shipping'])) {
                 $hasFreeShipping = PrimitiveUtils::castStringBooleanIntoBoolean($data['free_shipping']);
             }
+            $shipmentId = null;
+            if (!empty($data['shipment_id'])) {
+                $shipmentId = (int) SharedStorage::getStorage()->get($data['shipment_id']);
+            }
+            $carrierId = null;
+            if (!empty($data['carrier_id'])) {
+                $carrierId = (int) SharedStorage::getStorage()->get($data['carrier_id']);
+            }
+            $isVirtual = null;
+            if (isset($data['is_virtual'])) {
+                $isVirtual = PrimitiveUtils::castStringBooleanIntoBoolean($data['is_virtual']);
+            }
             $this->getCommandBus()->handle(
                 AddProductToOrderCommand::withNewInvoice(
                     $orderId,
@@ -214,7 +225,10 @@ class OrderFeatureContext extends AbstractDomainFeatureContext
                     $data['price_tax_incl'],
                     $data['price'],
                     (int) $data['amount'],
-                    $hasFreeShipping
+                    $hasFreeShipping,
+                    $shipmentId,
+                    $carrierId,
+                    $isVirtual
                 )
             );
         } catch (InvalidProductQuantityException $e) {
@@ -663,9 +677,9 @@ class OrderFeatureContext extends AbstractDomainFeatureContext
             $shipments = [];
 
             foreach (explode(',', $data['shipment_mapping']) as $pair) {
-                list($shipmentId, $qty) = explode(':', trim($pair));
+                list($shipmentRef, $qty) = explode(':', trim($pair));
                 $shipments[] = [
-                    'shipment_id' => (int) $shipmentId,
+                    'shipment_id' => (int) SharedStorage::getStorage()->get(trim($shipmentRef)),
                     'quantity' => (int) $qty,
                 ];
             }
@@ -1377,6 +1391,17 @@ class OrderFeatureContext extends AbstractDomainFeatureContext
         $this->assertLastErrorIs(
             InvalidCartRuleDiscountValueException::class,
             InvalidCartRuleDiscountValueException::INVALID_MIN_AMOUNT
+        );
+    }
+
+    /**
+     * @Then I should get error that order already has a free shipping discount
+     */
+    public function assertDuplicateFreeShippingCartRule(): void
+    {
+        $this->assertLastErrorIs(
+            InvalidCartRuleDiscountValueException::class,
+            InvalidCartRuleDiscountValueException::DUPLICATE_FREE_SHIPPING
         );
     }
 

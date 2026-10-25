@@ -9,6 +9,7 @@ declare(strict_types=1);
 namespace PrestaShop\PrestaShop\Adapter\Carrier\CommandHandler;
 
 use PrestaShop\PrestaShop\Adapter\Carrier\Repository\CarrierRepository;
+use PrestaShop\PrestaShop\Adapter\Carrier\Update\CarrierPositionUpdater;
 use PrestaShop\PrestaShop\Adapter\Carrier\Validate\CarrierValidator;
 use PrestaShop\PrestaShop\Adapter\File\Uploader\CarrierLogoFileUploader;
 use PrestaShop\PrestaShop\Adapter\Shop\Repository\ShopRepository;
@@ -18,6 +19,7 @@ use PrestaShop\PrestaShop\Core\Domain\Carrier\CommandHandler\EditCarrierHandlerI
 use PrestaShop\PrestaShop\Core\Domain\Carrier\Exception\CannotUpdateCarrierException;
 use PrestaShop\PrestaShop\Core\Domain\Carrier\ValueObject\CarrierId;
 use PrestaShop\PrestaShop\Core\Domain\Shop\ValueObject\ShopId;
+use PrestaShop\PrestaShop\Core\Hook\HookDispatcherInterface;
 
 /**
  * Edit Carrier
@@ -30,6 +32,8 @@ class EditCarrierHandler implements EditCarrierHandlerInterface
         private readonly CarrierLogoFileUploader $carrierLogoFileUploader,
         private readonly CarrierValidator $carrierValidator,
         private readonly ShopRepository $shopRepository,
+        private readonly HookDispatcherInterface $hookDispatcher,
+        private readonly CarrierPositionUpdater $carrierPositionUpdater,
     ) {
     }
 
@@ -51,9 +55,8 @@ class EditCarrierHandler implements EditCarrierHandlerInterface
         if (null !== $command->getTrackingUrl()) {
             $newCarrier->url = $command->getTrackingUrl();
         }
-        if (null !== $command->getPosition()) {
-            $newCarrier->position = $command->getPosition();
-        }
+        // The position is not assigned here: it is applied once the carrier is saved, so that the other carriers are
+        // shifted instead of sharing a position with it
         if (null !== $command->getActive()) {
             $newCarrier->active = $command->getActive();
         }
@@ -104,6 +107,9 @@ class EditCarrierHandler implements EditCarrierHandlerInterface
         if ($command->getAssociatedGroupIds()) {
             $this->carrierValidator->validateGroupsExist($command->getAssociatedGroupIds());
         }
+        if (null !== $command->getZones()) {
+            $this->carrierValidator->validateZonesExist($command->getZones());
+        }
         if ($command->getLogoPathName() !== null && $command->getLogoPathName() !== '') {
             $this->carrierValidator->validateLogoUpload($command->getLogoPathName());
         }
@@ -131,6 +137,10 @@ class EditCarrierHandler implements EditCarrierHandlerInterface
             $this->carrierRepository->updateAssociatedShops($newCarrierId, array_map(fn (ShopId $shopId) => $shopId->getValue(), $command->getAssociatedShopIds()));
         }
 
+        if (null !== $command->getPosition()) {
+            $this->carrierPositionUpdater->updatePosition($newCarrierId, (int) $newCarrier->position, $command->getPosition());
+        }
+
         if ($command->getLogoPathName() !== null) {
             $this->carrierLogoFileUploader->deleteOldFile($newCarrier->id);
 
@@ -142,6 +152,14 @@ class EditCarrierHandler implements EditCarrierHandlerInterface
         if (null !== $command->getZones()) {
             $this->carrierRepository->updateAssociatedZones($newCarrierId, $command->getZones());
         }
+
+        $this->hookDispatcher->dispatchWithParameters(
+            'actionCarrierUpdate',
+            [
+                'id_carrier' => (int) $command->getCarrierId()->getValue(),
+                'carrier' => $newCarrier,
+            ]
+        );
 
         return $newCarrierId;
     }

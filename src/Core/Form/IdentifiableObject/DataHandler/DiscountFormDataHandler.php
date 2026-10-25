@@ -23,7 +23,6 @@ use PrestaShop\PrestaShop\Core\Domain\Discount\ProductRuleType;
 use PrestaShop\PrestaShop\Core\Domain\Discount\ValueObject\DiscountId;
 use PrestaShop\PrestaShop\Core\Domain\Discount\ValueObject\DiscountType;
 use PrestaShop\PrestaShop\Core\Domain\Exception\DomainConstraintException;
-use PrestaShop\PrestaShop\Core\Domain\Product\Combination\ValueObject\NoCombinationId;
 use PrestaShopBundle\Form\Admin\Sell\Discount\CartConditionsType;
 use PrestaShopBundle\Form\Admin\Sell\Discount\DeliveryConditionsType;
 use PrestaShopBundle\Form\Admin\Sell\Discount\DiscountConditionsType;
@@ -74,6 +73,7 @@ class DiscountFormDataHandler implements FormDataHandlerInterface
         $command = new UpdateDiscountCommand($id);
 
         $command->setLocalizedNames($data['information']['names']);
+        $command->setActive((bool) $data['information']['active']);
 
         $this->fillCommandFromData($command, $data);
 
@@ -104,8 +104,8 @@ class DiscountFormDataHandler implements FormDataHandlerInterface
                 $this->setDiscountValue($command, $data);
                 break;
             case DiscountType::FREE_GIFT:
-                $command->setGiftProductId(!empty($data['free_gift'][0]['product_id']) ? (int) $data['free_gift'][0]['product_id'] : null);
-                $command->setGiftCombinationId(!empty($data['free_gift'][0]['combination_id']) ? (int) $data['free_gift'][0]['combination_id'] : null);
+                $command->setGiftProductId(!empty($data['free_gift']['product'][0]['id']) ? (int) $data['free_gift']['product'][0]['id'] : null);
+                $command->setGiftCombinationId(!empty($data['free_gift']['product'][0]['combination_id']) ? (int) $data['free_gift']['product'][0]['combination_id'] : null);
                 break;
             default:
                 throw new RuntimeException('Unknown discount type ' . $discountType);
@@ -113,6 +113,7 @@ class DiscountFormDataHandler implements FormDataHandlerInterface
 
         // Set description
         $command->setDescription($data['information']['description'] ?? '');
+        $command->setHighlightInCart((bool) ($data['information']['highlight_in_cart'] ?? false));
 
         // Set code
         if ($data['usability']['mode']['children_selector'] === DiscountUsabilityModeType::CODE_MODE) {
@@ -191,7 +192,7 @@ class DiscountFormDataHandler implements FormDataHandlerInterface
             $productRuleGroups = [];
 
             foreach ($specificProducts as $specificProduct) {
-                if (!empty($specificProduct['combination_id']) && $specificProduct['combination_id'] !== NoCombinationId::NO_COMBINATION_ID) {
+                if (!empty($specificProduct['combination_id'])) {
                     $productRuleGroups[] = new ProductRuleGroup(
                         $specificProduct['quantity'],
                         [
@@ -285,9 +286,13 @@ class DiscountFormDataHandler implements FormDataHandlerInterface
         // Delivery conditions
         if ($data['conditions'][DiscountConditionsType::DELIVERY_CONDITIONS]['children_selector'] === DeliveryConditionsType::CARRIERS) {
             $command->setCarrierIds($data['conditions'][DiscountConditionsType::DELIVERY_CONDITIONS][DeliveryConditionsType::CARRIERS]);
-        }
-        if ($data['conditions'][DiscountConditionsType::DELIVERY_CONDITIONS]['children_selector'] === DeliveryConditionsType::COUNTRY) {
+            $command->setCountryIds([]);
+        } elseif ($data['conditions'][DiscountConditionsType::DELIVERY_CONDITIONS]['children_selector'] === DeliveryConditionsType::COUNTRY) {
             $command->setCountryIds($data['conditions'][DiscountConditionsType::DELIVERY_CONDITIONS][DeliveryConditionsType::COUNTRY]);
+            $command->setCarrierIds([]);
+        } elseif ($data['conditions'][DiscountConditionsType::DELIVERY_CONDITIONS]['children_selector'] === DeliveryConditionsType::NONE) {
+            $command->setCarrierIds([]);
+            $command->setCountryIds([]);
         }
     }
 

@@ -103,7 +103,8 @@ class CustomerManagerFeatureContext extends AbstractPrestaShopFeatureContext
             isset($data['isEnabled']) ? $data['isEnabled'] : true,
             isset($data['isPartnerOffersSubscribed']) ? $data['isPartnerOffersSubscribed'] : false,
             isset($data['birthday']) ? $data['birthday'] : null,
-            isset($data['isGuest']) ? $data['isGuest'] : false
+            isset($data['isGuest']) ? $data['isGuest'] : false,
+            isset($data['newsletterSubscribed']) ? $data['newsletterSubscribed'] : false
         );
 
         /** @var CustomerId $id */
@@ -111,6 +112,7 @@ class CustomerManagerFeatureContext extends AbstractPrestaShopFeatureContext
 
         $this->latestResult = $id->getValue();
         $this->customerRegistry[$customerReference] = $id->getValue();
+        $this->getSharedStorage()->set($customerReference, $id->getValue());
     }
 
     /**

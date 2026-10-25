@@ -347,9 +347,7 @@ class SpecificPriceCore extends ObjectModel
             $query_extra .= self::filterOutField('id_product', $id_product);
         }
 
-        if ($id_customer !== null) {
-            $query_extra .= self::filterOutField('id_customer', $id_customer);
-        }
+        $query_extra .= self::filterOutField('id_customer', $id_customer);
 
         if ($id_product_attribute !== null) {
             $query_extra .= self::filterOutField('id_product_attribute', $id_product_attribute);
@@ -531,7 +529,7 @@ class SpecificPriceCore extends ObjectModel
             );
         }
 
-        if (!array_key_exists($key, self::$_specificPriceCache)) {
+        if ($key === null || !array_key_exists($key, self::$_specificPriceCache)) {
             $query_extra = self::computeExtraConditions($id_product, $id_product_attribute, $id_customer, $id_cart);
             if ($key === null) {
                 // compute the key after calling computeExtraConditions as it initializes some useful cache

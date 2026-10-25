@@ -10,6 +10,7 @@ use PrestaShop\PrestaShop\Core\Action\ActionsBarButtonsCollection;
 use PrestaShop\PrestaShop\Core\Domain\Cart\CartStatus;
 use PrestaShop\PrestaShop\Core\Exception\TypeException;
 use PrestaShop\PrestaShop\Core\Feature\TokenInUrls;
+use PrestaShop\PrestaShop\Core\FeatureFlag\FeatureFlagStateCheckerInterface;
 use PrestaShop\PrestaShop\Core\Localization\Locale;
 use PrestaShop\PrestaShop\Core\Localization\Specification\Number as NumberSpecification;
 use PrestaShop\PrestaShop\Core\Localization\Specification\Price as PriceSpecification;
@@ -656,6 +657,7 @@ class AdminControllerCore extends Controller
             'breadcrumbs2' => $breadcrumbs2,
             'quick_access_current_link_name' => Tools::safeOutput($breadcrumbs2['tab']['name'] . ' - ' . $breadcrumbs2['action']['name']),
             'quick_access_current_link_icon' => $breadcrumbs2['container']['icon'],
+            'quick_access_current_link_short_name' => Tools::safeOutput($breadcrumbs2['tab']['name']),
         ]);
 
         /* BEGIN - Backward compatibility < 1.6.0.3 */
@@ -907,7 +909,7 @@ class AdminControllerCore extends Controller
                     if (($type == 'date' || $type == 'datetime') && is_string($value)) {
                         $value = json_decode($value, true);
                     }
-                    $key = isset($tmp_tab[1]) ? $tmp_tab[0] . '.`' . $tmp_tab[1] . '`' : '`' . $tmp_tab[0] . '`';
+                    $key = isset($tmp_tab[1]) ? '`' . bqSQL($tmp_tab[0]) . '`.`' . bqSQL($tmp_tab[1]) . '`' : '`' . bqSQL($tmp_tab[0]) . '`';
 
                     // Assignment by reference
                     if (array_key_exists('tmpTableFilter', $field)) {
@@ -924,7 +926,7 @@ class AdminControllerCore extends Controller
                             if (!Validate::isDate($value[0])) {
                                 $this->errors[] = $this->trans('The \'From\' date format is invalid (YYYY-MM-DD)', [], 'Admin.Notifications.Error');
                             } else {
-                                $sql_filter .= ' AND ' . pSQL($key) . ' >= \'' . pSQL(Tools::dateFrom($value[0])) . '\'';
+                                $sql_filter .= ' AND ' . $key . ' >= \'' . pSQL(Tools::dateFrom($value[0])) . '\'';
                             }
                         }
 
@@ -932,7 +934,7 @@ class AdminControllerCore extends Controller
                             if (!Validate::isDate($value[1])) {
                                 $this->errors[] = $this->trans('The \'To\' date format is invalid (YYYY-MM-DD)', [], 'Admin.Notifications.Error');
                             } else {
-                                $sql_filter .= ' AND ' . pSQL($key) . ' <= \'' . pSQL(Tools::dateTo($value[1])) . '\'';
+                                $sql_filter .= ' AND ' . $key . ' <= \'' . pSQL(Tools::dateTo($value[1])) . '\'';
                             }
                         }
                     } else {
@@ -941,16 +943,16 @@ class AdminControllerCore extends Controller
                         $alias = ($definition && !empty($definition['fields'][$filter]['shop'])) ? 'sa' : 'a';
 
                         if ($type == 'int' || $type == 'bool') {
-                            $sql_filter .= (($check_key || $key == '`active`') ? $alias . '.' : '') . pSQL($key) . ' = ' . (int) $value . ' ';
+                            $sql_filter .= (($check_key || $key == '`active`') ? $alias . '.' : '') . $key . ' = ' . (int) $value . ' ';
                         } elseif ($type == 'decimal') {
-                            $sql_filter .= ($check_key ? $alias . '.' : '') . pSQL($key) . ' = ' . (float) $value . ' ';
+                            $sql_filter .= ($check_key ? $alias . '.' : '') . $key . ' = ' . (float) $value . ' ';
                         } elseif ($type == 'select') {
-                            $sql_filter .= ($check_key ? $alias . '.' : '') . pSQL($key) . ' = \'' . pSQL($value) . '\' ';
+                            $sql_filter .= ($check_key ? $alias . '.' : '') . $key . ' = \'' . pSQL($value) . '\' ';
                         } elseif ($type == 'price') {
                             $value = str_replace(',', '.', $value);
-                            $sql_filter .= ($check_key ? $alias . '.' : '') . pSQL($key) . ' = ' . pSQL(trim($value)) . ' ';
+                            $sql_filter .= ($check_key ? $alias . '.' : '') . $key . ' = ' . (float) trim($value) . ' ';
                         } else {
-                            $sql_filter .= ($check_key ? $alias . '.' : '') . pSQL($key) . ' LIKE \'%' . pSQL(trim($value)) . '%\' ';
+                            $sql_filter .= ($check_key ? $alias . '.' : '') . $key . ' LIKE \'%' . pSQL(trim($value)) . '%\' ';
                         }
                     }
                 }
@@ -993,7 +995,7 @@ class AdminControllerCore extends Controller
                     $this->processFilter();
                 }
 
-                if (!empty($_POST) && is_array($_POST) && (int) Tools::getValue('submitFilter' . $this->list_id) || Tools::isSubmit('submitReset' . $this->list_id)) {
+                if (!empty($_POST) && (int) Tools::getValue('submitFilter' . $this->list_id) || Tools::isSubmit('submitReset' . $this->list_id)) {
                     $this->setRedirectAfter(self::$currentIndex . '&token=' . $this->token . (Tools::isSubmit('submitFilter' . $this->list_id) ? '&submitFilter' . $this->list_id . '=' . (int) Tools::getValue('submitFilter' . $this->list_id) : ''));
                 }
 
@@ -1195,10 +1197,15 @@ class AdminControllerCore extends Controller
 
             $this->copyFromPost($this->object, $this->table);
             $this->beforeAdd($this->object);
-            if (method_exists($this->object, 'add') && !$this->object->add()) {
+            if (!$this->object->add()) {
                 $this->errors[] = $this->trans('An error occurred while creating an object.', [], 'Admin.Notifications.Error') .
                     ' <b>' . $this->table . ' (' . Db::getInstance()->getMsgError() . ')</b>';
-            } elseif (($_POST[$this->identifier] = $this->object->id /* voluntary do affectation here */) && $this->postImage($this->object->id) && count($this->errors) === 0 && $this->_redirect) {
+            } elseif (
+                ($_POST[$this->identifier] = $this->object->id /* voluntary do affectation here */)
+                && $this->postImage($this->object->id)
+                && count($this->errors) === 0 // @phpstan-ignore identical.alwaysTrue
+                && $this->_redirect
+            ) {
                 PrestaShopLogger::addLog(
                     $this->trans('%s addition', [htmlspecialchars($this->className)]),
                     1,
@@ -1304,7 +1311,7 @@ class AdminControllerCore extends Controller
                         }
 
                         // Default behavior (save and back)
-                        if (empty($this->redirect_after) && $this->redirect_after !== false) {
+                        if (empty($this->redirect_after)) {
                             $this->redirect_after = self::$currentIndex . ($parent_id ? '&' . $this->identifier . '=' . $object->id : '') . '&conf=4&token=' . $this->token;
                         }
                     }
@@ -1999,8 +2006,30 @@ class AdminControllerCore extends Controller
         $is_multishop = Shop::isFeatureActive();
 
         // Quick access
+        $quick_access = [];
+        $legacyAjaxUrl = $this->context->link->getAdminLink('AdminQuickAccesses', true, [], ['action' => 'GetUrl', 'ajax' => 1]);
+        $quick_access_ajax_add_url = $legacyAjaxUrl;
+        $quick_access_ajax_delete_url = $legacyAjaxUrl;
         if ((int) $this->context->employee->id) {
             $quick_access = QuickAccess::getQuickAccessesWithToken($this->context->language->id, (int) $this->context->employee->id);
+            /** @var FeatureFlagStateCheckerInterface $featureFlagChecker */
+            $featureFlagChecker = $this->get(FeatureFlagStateCheckerInterface::class);
+            if ($featureFlagChecker->isEnabled('quick_access')) {
+                try {
+                    $quick_access_ajax_add_url = $this->context->link->getAdminLink(
+                        'AdminQuickAccesses',
+                        true,
+                        ['route' => 'admin_quick_accesses_ajax_add']
+                    );
+                    $quick_access_ajax_delete_url = $this->context->link->getAdminLink(
+                        'AdminQuickAccesses',
+                        true,
+                        ['route' => 'admin_quick_accesses_ajax_delete']
+                    );
+                } catch (Exception $e) {
+                    // keep legacy fallback URLs
+                }
+            }
         }
 
         $tabs = $this->getTabs();
@@ -2031,6 +2060,8 @@ class AdminControllerCore extends Controller
                 'search_type' => Tools::getValue('bo_search_type'),
                 'bo_query' => Tools::safeOutput(Tools::getValue('bo_query')),
                 'quick_access' => empty($quick_access) ? [] : $quick_access,
+                'quick_access_ajax_add_url' => $quick_access_ajax_add_url,
+                'quick_access_ajax_delete_url' => $quick_access_ajax_delete_url,
                 'multi_shop' => Shop::isFeatureActive(),
                 'shop_list' => $helperShop->getRenderedShopList(),
                 'current_shop_name' => $helperShop->getCurrentShopName(),
@@ -3446,10 +3477,6 @@ class AdminControllerCore extends Controller
             unset($this->context->cookie->{$this->list_id . '_pagination'});
         }
 
-        if (!is_numeric($limit)) {
-            throw new PrestaShopException('Invalid limit. It should be a numeric.');
-        }
-
         return $limit;
     }
 
@@ -3689,7 +3716,9 @@ class AdminControllerCore extends Controller
     /**
      * Copy data values from $_POST to object.
      *
-     * @param ObjectModel $object Object
+     * @template T of ObjectModel
+     *
+     * @param T $object
      * @param string $table Object table
      */
     protected function copyFromPost(&$object, $table)

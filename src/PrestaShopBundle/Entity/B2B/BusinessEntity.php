@@ -4,6 +4,8 @@
  * docs/licenses/LICENSE.txt file that was distributed with this source code.
  */
 
+declare(strict_types=1);
+
 namespace PrestaShopBundle\Entity\B2B;
 
 use DateTime;
@@ -18,14 +20,16 @@ use PrestaShopBundle\Entity\Enum\BusinessEntityStatus;
  * @ORM\Table(
  *     indexes={
  *
- *         @ORM\Index(name="business_entity_enterprise_id_idx", columns={"enterprise_id"}),
- *         @ORM\Index(name="business_entity_external_ref_idx", columns={"external_ref"})
+ *         @ORM\Index(name="business_entity_shop_idx", columns={"id_shop"}),
+ *         @ORM\Index(name="business_entity_customer_group_idx", columns={"id_customer_group"}),
+ *         @ORM\Index(name="business_entity_external_ref_idx", columns={"external_ref"}),
+ *         @ORM\Index(name="business_entity_deleted_idx", columns={"deleted"})
  *     }
  *  )
  *
  * @ORM\HasLifecycleCallbacks
  *
- * @ORM\Entity()
+ * @ORM\Entity(repositoryClass="PrestaShopBundle\Entity\Repository\BusinessEntityRepository")
  */
 class BusinessEntity
 {
@@ -37,6 +41,16 @@ class BusinessEntity
      * @ORM\GeneratedValue(strategy="AUTO")
      */
     private int $id;
+
+    /**
+     * @ORM\Column(name="id_shop", type="integer", options={"unsigned"=true})
+     */
+    private int $idShop;
+
+    /**
+     * @ORM\Column(name="id_customer_group", type="integer", options={"unsigned"=true})
+     */
+    private int $idCustomerGroup;
 
     /**
      * @ORM\Column(name="external_ref", type="string", length=255, nullable=true)
@@ -54,14 +68,19 @@ class BusinessEntity
     private ?string $legalName;
 
     /**
-     * @ORM\Column(name="flag_delivery_authorized", type="boolean", options={"default"=false})
+     * @ORM\Column(name="delivery_authorized", type="boolean", options={"default"=false})
      */
-    private bool $flagDeliveryAuthorized = false;
+    private bool $deliveryAuthorized = false;
 
     /**
      * @ORM\Column(name="status", enumType=BusinessEntityStatus::class, options={"default"="pending"})
      */
     private BusinessEntityStatus $status;
+
+    /**
+     * @ORM\Column(name="deleted", type="boolean", options={"default"=false})
+     */
+    private bool $deleted = false;
 
     /**
      * @ORM\Column(name="created_at", type="datetime")
@@ -74,12 +93,16 @@ class BusinessEntity
     private DateTime $updatedAt;
 
     /**
-     * @ORM\OneToMany(targetEntity="PrestaShopBundle\Entity\B2B\BusinessEntityAddress", mappedBy="businessEntity")
+     * @ORM\OneToMany(targetEntity="PrestaShopBundle\Entity\B2B\BusinessEntityAddress", mappedBy="businessEntity", cascade={"persist"})
+     *
+     * @var Collection<BusinessEntityAddress>
      */
     private Collection $businessEntityAddresses;
 
     /**
      * @ORM\OneToMany(targetEntity="PrestaShopBundle\Entity\B2B\BusinessEntityIdentifier", mappedBy="businessEntity")
+     *
+     * @var Collection<BusinessEntityIdentifier>
      */
     private Collection $businessEntityIdentifiers;
 
@@ -90,6 +113,8 @@ class BusinessEntity
      *     orphanRemoval=true,
      *     cascade={"persist","remove"}
      * )
+     *
+     * @var Collection<BusinessEntityCustomerB2b>
      */
     private Collection $businessEntityCustomerB2bs;
 
@@ -99,13 +124,35 @@ class BusinessEntity
         $this->businessEntityIdentifiers = new ArrayCollection();
         $this->businessEntityCustomerB2bs = new ArrayCollection();
         $this->status = BusinessEntityStatus::PENDING;
-        $this->createdAt = new DateTime();
-        $this->updatedAt = new DateTime();
     }
 
     public function getId(): int
     {
         return $this->id;
+    }
+
+    public function getIdShop(): int
+    {
+        return $this->idShop;
+    }
+
+    public function setIdShop(int $idShop): self
+    {
+        $this->idShop = $idShop;
+
+        return $this;
+    }
+
+    public function getIdCustomerGroup(): int
+    {
+        return $this->idCustomerGroup;
+    }
+
+    public function setIdCustomerGroup(int $idCustomerGroup): self
+    {
+        $this->idCustomerGroup = $idCustomerGroup;
+
+        return $this;
     }
 
     public function getExternalRef(): ?string
@@ -144,14 +191,14 @@ class BusinessEntity
         return $this;
     }
 
-    public function isFlagDeliveryAuthorized(): bool
+    public function isDeliveryAuthorized(): bool
     {
-        return $this->flagDeliveryAuthorized;
+        return $this->deliveryAuthorized;
     }
 
-    public function setFlagDeliveryAuthorized(bool $flagDeliveryAuthorized): self
+    public function setDeliveryAuthorized(bool $deliveryAuthorized): self
     {
-        $this->flagDeliveryAuthorized = $flagDeliveryAuthorized;
+        $this->deliveryAuthorized = $deliveryAuthorized;
 
         return $this;
     }
@@ -164,6 +211,18 @@ class BusinessEntity
     public function setStatus(BusinessEntityStatus $status): self
     {
         $this->status = $status;
+
+        return $this;
+    }
+
+    public function isDeleted(): bool
+    {
+        return $this->deleted;
+    }
+
+    public function setDeleted(bool $deleted): self
+    {
+        $this->deleted = $deleted;
 
         return $this;
     }

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * For the full copyright and license information, please view the
  * docs/licenses/LICENSE.txt file that was distributed with this source code.
@@ -18,6 +19,7 @@ use Doctrine\Common\Annotations\AnnotationException;
 use Order;
 use OrderDetail;
 use OrderReturn;
+use PrestaShop\PrestaShop\Adapter\Carrier\TrackingUrlFormatter;
 use PrestaShop\PrestaShop\Adapter\ContainerFinder;
 use PrestaShop\PrestaShop\Adapter\Presenter\AbstractLazyArray;
 use PrestaShop\PrestaShop\Adapter\Presenter\Cart\CartPresenter;
@@ -82,6 +84,7 @@ class OrderLazyArray extends AbstractLazyArray
         $containerFinder = new ContainerFinder(Context::getContext());
         $this->shipmentRepository = $containerFinder->getContainer()->get(ShipmentRepository::class);
         $this->shipmentTotalCalculator = $containerFinder->getContainer()->get(ShipmentTotalsCalculatorInterface::class);
+        $this->initExtraPropertiesBag(Order::class, (int) $order->id, (int) $order->id_lang ?: null);
 
         parent::__construct();
     }
@@ -478,7 +481,7 @@ class OrderLazyArray extends AbstractLazyArray
 
         $carrier = $this->getCarrier();
         if (!empty($carrier['url']) && !empty($order->getShippingNumber())) {
-            return str_replace('@', $order->getShippingNumber(), $carrier['url']);
+            return TrackingUrlFormatter::format($carrier['url'], $order->getShippingNumber(), $order);
         }
 
         return '';

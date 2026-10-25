@@ -8,8 +8,10 @@ namespace Tests\Integration\Behaviour\Features\Context\Configuration;
 
 use Configuration;
 use Country;
+use Group;
+use PrestaShop\PrestaShop\Adapter\Feature\GroupFeature;
+use Tests\Integration\Behaviour\Features\Context\CommonFeatureContext;
 use Tests\Integration\Behaviour\Features\Context\SharedStorage;
-use Tests\Integration\Behaviour\Features\Context\Util\PrimitiveUtils;
 use Tools;
 
 class CommonConfigurationFeatureContext extends AbstractConfigurationFeatureContext
@@ -50,16 +52,38 @@ class CommonConfigurationFeatureContext extends AbstractConfigurationFeatureCont
     public function activateGroupFeature()
     {
         Configuration::updateGlobalValue('PS_GROUP_FEATURE_ACTIVE', '1');
+        Group::clearCachedValues();
+    }
+
+    /**
+     * @Given /^groups feature is deactivated$/
+     */
+    public function deactivateGroupFeature(): void
+    {
+        /** @var GroupFeature $groupFeature */
+        $groupFeature = CommonFeatureContext::getContainer()->get('prestashop.adapter.feature.group_feature');
+        $groupFeature->disable();
+        Group::clearCachedValues();
+    }
+
+    /**
+     * @Given the default shop is referenced as :reference
+     */
+    public function defaultShopReferencedAs(string $reference): void
+    {
+        $shopId = (int) Configuration::get('PS_SHOP_DEFAULT') ?: 1;
+        SharedStorage::getStorage()->set($reference, $shopId);
     }
 
     /**
      * @Given /^customization feature is (enabled|disabled)$/
      *
-     * @Transform(enabled|disabled)
+     * Status transformation handled by @see StringToBoolTransformContext
+     *
+     * @param bool $status
      */
-    public function toggleCustomizationFeature(string $status)
+    public function toggleCustomizationFeature(bool $status)
     {
-        $status = PrimitiveUtils::castStringBooleanIntoBoolean($status);
         Configuration::set(
             'PS_CUSTOMIZATION_FEATURE_ACTIVE',
             $status
@@ -69,13 +93,12 @@ class CommonConfigurationFeatureContext extends AbstractConfigurationFeatureCont
     /**
      * @Given /^search indexation feature is (enabled|disabled)$/
      *
-     * @Transform(enabled|disabled)
+     * Status transformation handled by @see StringToBoolTransformContext
      *
-     * @param string $status
+     * @param bool $status
      */
-    public function toggleSearchIndexation(string $status): void
+    public function toggleSearchIndexation(bool $status): void
     {
-        $status = PrimitiveUtils::castStringBooleanIntoBoolean($status);
         Configuration::set(
             'PS_SEARCH_INDEXATION',
             $status

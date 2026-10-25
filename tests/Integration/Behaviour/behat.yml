@@ -1,11 +1,45 @@
 default:
   suites:
+    hook-module:
+      paths:
+        - "%paths.base%/Features/Scenario/Hook"
+      contexts:
+        - Tests\Integration\Behaviour\Features\Context\CommonFeatureContext
+        - Tests\Integration\Behaviour\Features\Context\ModuleFeatureContext
+        - Tests\Integration\Behaviour\Features\Context\Domain\Hook\HookModuleFeatureContext
     contact:
       paths:
         - "%paths.base%/Features/Scenario/Contact"
       contexts:
         - Tests\Integration\Behaviour\Features\Context\CommonFeatureContext
         - Tests\Integration\Behaviour\Features\Context\Domain\ContactFeatureContext
+    import:
+      paths:
+        - "%paths.base%/Features/Scenario/Import"
+      contexts:
+        - Tests\Integration\Behaviour\Features\Context\CommonFeatureContext
+        - Tests\Integration\Behaviour\Features\Context\Domain\Import\ImportJobFeatureContext
+        # the start guards build the shop scopes they refuse
+        - Tests\Integration\Behaviour\Features\Context\ShopFeatureContext
+        # the entity features assert what an import produced through the domain's own contexts,
+        # so an importer is checked against the same expectations as the commands it dispatches
+        - Tests\Integration\Behaviour\Features\Context\Domain\CategoryFeatureContext
+        - Tests\Integration\Behaviour\Features\Context\LanguageFeatureContext
+        - Tests\Integration\Behaviour\Features\Context\Domain\LanguageFeatureContext
+        - Tests\Integration\Behaviour\Features\Context\Domain\ManufacturerFeatureContext
+        - Tests\Integration\Behaviour\Features\Context\Domain\ProductFeatureContext
+        - Tests\Integration\Behaviour\Features\Context\Domain\Product\CommonProductFeatureContext
+        - Tests\Integration\Behaviour\Features\Context\Domain\Product\DetailsAssertionFeatureContext
+        - Tests\Integration\Behaviour\Features\Context\Domain\Product\PricesAssertionFeatureContext
+        - Tests\Integration\Behaviour\Features\Context\Domain\Product\RelatedProductsFeatureContext
+        - Tests\Integration\Behaviour\Features\Context\Domain\Product\SpecificPriceContext
+        - Tests\Integration\Behaviour\Features\Context\Domain\Product\StockAssertionFeatureContext
+        - Tests\Integration\Behaviour\Features\Context\Domain\Product\UpdateCategoriesFeatureContext
+        # the product assertion steps take transformed arguments, not raw tables
+        - Tests\Integration\Behaviour\Features\Transform\LocalizedArrayTransformContext
+        - Tests\Integration\Behaviour\Features\Transform\SharedStorageTransformContext
+        - Tests\Integration\Behaviour\Features\Transform\StringToArrayTransformContext
+        - Tests\Integration\Behaviour\Features\Transform\StringToBoolTransformContext
     database:
       paths:
         - "%paths.base%/Features/Scenario/Database"
@@ -28,6 +62,7 @@ default:
       contexts:
         - Tests\Integration\Behaviour\Features\Context\CommonFeatureContext
         - Tests\Integration\Behaviour\Features\Context\Domain\TaxRulesGroupFeatureContext
+        - Tests\Integration\Behaviour\Features\Context\Domain\TaxRuleFeatureContext
         - Tests\Integration\Behaviour\Features\Transform\StringToBoolTransformContext
     title:
       paths:
@@ -37,13 +72,27 @@ default:
         - Tests\Integration\Behaviour\Features\Context\Domain\TitleFeatureContext
         - Tests\Integration\Behaviour\Features\Context\TitleFeatureContext
         - Tests\Integration\Behaviour\Features\Context\LanguageFeatureContext
+    quick_access:
+      paths:
+        - "%paths.base%/Features/Scenario/QuickAccess"
+      contexts:
+        - Tests\Integration\Behaviour\Features\Context\CommonFeatureContext
+        - Tests\Integration\Behaviour\Features\Context\Domain\QuickAccessFeatureContext
+        - Tests\Integration\Behaviour\Features\Context\LanguageFeatureContext
     store:
       paths:
         - "%paths.base%/Features/Scenario/Store"
       contexts:
         - Tests\Integration\Behaviour\Features\Context\CommonFeatureContext
         - Tests\Integration\Behaviour\Features\Context\Domain\StoreFeatureContext
-        - Tests\Integration\Behaviour\Features\Context\StoreFeatureContext
+        - Tests\Integration\Behaviour\Features\Context\LanguageFeatureContext
+        - Tests\Integration\Behaviour\Features\Context\ShopFeatureContext
+    email_body_translation:
+      paths:
+        - "%paths.base%/Features/Scenario/MailTemplate"
+      contexts:
+        - Tests\Integration\Behaviour\Features\Context\CommonFeatureContext
+        - Tests\Integration\Behaviour\Features\Context\Domain\EmailBodyTranslationFeatureContext
     customer:
       paths:
         - "%paths.base%/Features/Scenario/Customer"
@@ -99,6 +148,7 @@ default:
         - Tests\Integration\Behaviour\Features\Context\Domain\Carrier\CarrierRangesFeatureContext
         - Tests\Integration\Behaviour\Features\Context\Domain\ZoneFeatureContext
         - Tests\Integration\Behaviour\Features\Context\Domain\CustomerFeatureContext
+        - Tests\Integration\Behaviour\Features\Context\Domain\CustomerGroupFeatureContext
         - Tests\Integration\Behaviour\Features\Context\CartFeatureContext
         - Tests\Integration\Behaviour\Features\Context\CartRuleFeatureContext
         - Tests\Integration\Behaviour\Features\Context\CategoryFeatureContext
@@ -112,6 +162,7 @@ default:
         - Tests\Integration\Behaviour\Features\Context\CountryFeatureContext
         - Tests\Integration\Behaviour\Features\Context\CurrencyFeatureContext
         - Tests\Integration\Behaviour\Features\Context\CustomerFeatureContext
+        - Tests\Integration\Behaviour\Features\Context\CustomerManagerFeatureContext
         - Tests\Integration\Behaviour\Features\Context\Domain\CartFeatureContext
         - Tests\Integration\Behaviour\Features\Context\Domain\OrderFeatureContext
         - Tests\Integration\Behaviour\Features\Context\Domain\ProductFeatureContext
@@ -275,6 +326,7 @@ default:
         - Tests\Integration\Behaviour\Features\Context\CountryFeatureContext
         - Tests\Integration\Behaviour\Features\Context\CurrencyFeatureContext
         - Tests\Integration\Behaviour\Features\Context\CustomerFeatureContext
+        - Tests\Integration\Behaviour\Features\Context\CustomerManagerFeatureContext
         - Tests\Integration\Behaviour\Features\Context\Domain\Carrier\CarrierFeatureContext
         - Tests\Integration\Behaviour\Features\Context\Domain\Carrier\CarrierRangesFeatureContext
         - Tests\Integration\Behaviour\Features\Context\Domain\CartFeatureContext
@@ -292,7 +344,9 @@ default:
         - Tests\Integration\Behaviour\Features\Context\Domain\Product\Combination\UpdateCombinationFeatureContext
         - Tests\Integration\Behaviour\Features\Context\Domain\Product\Combination\UpdateCombinationStockFeatureContext
         - Tests\Integration\Behaviour\Features\Context\Domain\Product\CommonProductFeatureContext
+        - Tests\Integration\Behaviour\Features\Context\Domain\Product\DeleteProductFeatureContext
         - Tests\Integration\Behaviour\Features\Context\Domain\Product\UpdateCategoriesFeatureContext
+        - Tests\Integration\Behaviour\Features\Context\Domain\Product\UpdateCustomizationFieldsFeatureContext
         - Tests\Integration\Behaviour\Features\Context\Domain\Product\UpdateProductFeatureContext
         - Tests\Integration\Behaviour\Features\Context\Domain\Product\UpdateStatusFeatureContext
         - Tests\Integration\Behaviour\Features\Context\Domain\Product\UpdateStockFeatureContext
@@ -441,6 +495,7 @@ default:
         - Tests\Integration\Behaviour\Features\Context\Configuration\EmailConfigurationFeatureContext
         - Tests\Integration\Behaviour\Features\Context\CountryFeatureContext
         - Tests\Integration\Behaviour\Features\Context\CustomerFeatureContext
+        - Tests\Integration\Behaviour\Features\Context\Domain\ApiClientManagementFeatureContext
         - Tests\Integration\Behaviour\Features\Context\Domain\AttributeGroupFeatureContext
         - Tests\Integration\Behaviour\Features\Context\Domain\CartFeatureContext
         - Tests\Integration\Behaviour\Features\Context\Domain\OrderFeatureContext
@@ -527,6 +582,7 @@ default:
         - Tests\Integration\Behaviour\Features\Context\CommonFeatureContext
         - Tests\Integration\Behaviour\Features\Context\Domain\CountryFeatureContext
         - Tests\Integration\Behaviour\Features\Context\LanguageFeatureContext
+        - Tests\Integration\Behaviour\Features\Context\ShopFeatureContext
     product:
       paths:
         - "%paths.base%/Features/Scenario/Product"
@@ -560,6 +616,7 @@ default:
         - Tests\Integration\Behaviour\Features\Context\Domain\Product\Combination\SearchCombinationFeatureContext
         - Tests\Integration\Behaviour\Features\Context\Domain\Product\Combination\SearchProductCombinationFeatureContext
         - Tests\Integration\Behaviour\Features\Context\Domain\Product\Combination\UpdateCombinationFeatureContext
+        - Tests\Integration\Behaviour\Features\Context\Domain\Product\Combination\UpdateCombinationFeatureValuesFeatureContext
         - Tests\Integration\Behaviour\Features\Context\Domain\Product\Combination\UpdateCombinationImagesFeatureContext
         - Tests\Integration\Behaviour\Features\Context\Domain\Product\Combination\UpdateCombinationStockFeatureContext
         - Tests\Integration\Behaviour\Features\Context\Domain\Product\Combination\UpdateCombinationSuppliersFeatureContext
@@ -635,6 +692,13 @@ default:
         - Tests\Integration\Behaviour\Features\Context\Domain\AliasFeatureContext
         - Tests\Integration\Behaviour\Features\Context\CommonFeatureContext
         - Tests\Integration\Behaviour\Features\Transform\StringToBoolTransformContext
+    extra-property-definition:
+      paths:
+        - "%paths.base%/Features/Scenario/ExtraProperty"
+      contexts:
+        - Tests\Integration\Behaviour\Features\Context\Domain\ExtraPropertyDefinitionFeatureContext
+        - Tests\Integration\Behaviour\Features\Context\CommonFeatureContext
+        - Tests\Integration\Behaviour\Features\Context\ShopFeatureContext
     api-client:
       paths:
         - "%paths.base%/Features/Scenario/ApiClient"
@@ -766,3 +830,9 @@ default:
         - Tests\Integration\Behaviour\Features\Context\LanguageFeatureContext
         - Tests\Integration\Behaviour\Features\Transform\LocalizedArrayTransformContext
         - Tests\Integration\Behaviour\Features\Transform\StringToBoolTransformContext
+    business_entity:
+      paths:
+        - "%paths.base%/Features/Scenario/BusinessEntity"
+      contexts:
+        - Tests\Integration\Behaviour\Features\Context\CommonFeatureContext
+        - Tests\Integration\Behaviour\Features\Context\Domain\BusinessEntityFeatureContext

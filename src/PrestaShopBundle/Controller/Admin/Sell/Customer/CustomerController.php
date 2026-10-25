@@ -339,7 +339,7 @@ class CustomerController extends PrestaShopAdminController
         $customerViewedProductGrid = $customerViewedProductGridFactory->getGrid($customerViewedProductFilters);
 
         if ($request->query->has('conf')) {
-            $this->manageLegacyFlashes($request->query->get('conf'));
+            $this->manageLegacyFlashes($request->query->getInt('conf'));
         }
 
         return $this->render('@PrestaShop/Admin/Sell/Customer/view.html.twig', [
@@ -380,7 +380,7 @@ class CustomerController extends PrestaShopAdminController
         $privateNoteForm = $this->createForm(PrivateNoteType::class);
         $privateNoteForm->handleRequest($request);
 
-        if ($privateNoteForm->isSubmitted()) {
+        if ($privateNoteForm->isSubmitted() && $privateNoteForm->isValid()) {
             $data = $privateNoteForm->getData();
 
             try {
@@ -394,6 +394,10 @@ class CustomerController extends PrestaShopAdminController
                     'error',
                     $this->getErrorMessageForException($e, $this->getErrorMessages($e))
                 );
+            }
+        } else {
+            foreach ($privateNoteForm->getErrors(true) as $error) {
+                $this->addFlash('error', htmlentities($error->getMessage()));
             }
         }
 
@@ -1010,7 +1014,7 @@ class CustomerController extends PrestaShopAdminController
      *
      * @param int $messageId The message id from legacy context
      */
-    private function manageLegacyFlashes($messageId): void
+    private function manageLegacyFlashes(int $messageId): void
     {
         $messages = [
             1 => $this->trans('Successful deletion', [], 'Admin.Notifications.Success'),

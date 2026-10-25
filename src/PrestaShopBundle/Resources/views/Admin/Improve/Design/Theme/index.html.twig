@@ -7,13 +7,13 @@
   add: {
     href: path('admin_themes_import'),
     desc: 'Add new theme'|trans({}, 'Admin.Design.Feature'),
-    icon: 'add_circle_outline'
+    icon: 'add_circle_outline',
   },
   export: {
     href: path('admin_themes_export_current'),
     desc: 'Export current theme'|trans({}, 'Admin.Design.Feature'),
-    icon: 'cloud_download'
-  }
+    icon: 'cloud_download',
+  },
   } %}
 
 {% block content %}
@@ -65,7 +65,7 @@
             themeAuthor: currentlyUsedTheme.get('author.name'),
             themeAuthorUrl: theme.get('author.url'),
             themeFramework: theme.get('meta.compatibility.framework'),
-            isActive: true
+            isActive: true,
           } %}
             {% block image %}
               <img src="{{ baseShopUrl }}{{ currentlyUsedTheme.get('preview') }}" alt="{{ currentlyUsedTheme.get('display_name') }}">
@@ -87,7 +87,7 @@
                 themeAuthor: theme.get('author.name'),
                 themeAuthorUrl: theme.get('author.url'),
                 themeFramework: theme.get('meta.compatibility.framework'),
-                isActive: false
+                isActive: false,
               } %}
                 {% block image %}
                   <img src="{{ baseShopUrl }}{{ theme.get('preview') }}" alt="{{ theme.get('display_name') }}">
@@ -102,14 +102,21 @@
                       <span>{{ 'Use this theme'|trans({}, 'Admin.Design.Feature') }}</span>
                     </button>
                   </form>
-                  <form action="{{ path('admin_themes_delete', {themeName: theme.name}) }}" method="post" class="d-inline">
-                    <input type="hidden" name="token" value="{{ csrf_token('delete-theme') }}"/>
-                    <button type="button" class="btn delete-button js-display-delete-theme-modal">
-                      <i class="material-icons">
-                        delete
-                      </i>
+                  {% if theme.name not in notDeletableThemes %}
+                    <form action="{{ path('admin_themes_delete', {themeName: theme.name}) }}" method="post" class="d-inline">
+                      <input type="hidden" name="token" value="{{ csrf_token('delete-theme') }}"/>
+                      <button type="button" class="btn delete-button js-display-delete-theme-modal">
+                        <i class="material-icons">
+                          delete
+                        </i>
+                      </button>
+                    </form>
+                  {% else %}
+                    <button title="{{ 'You can\'t delete this theme because it is either currently used or a parent'|trans({}, 'Admin.Design.Feature') }}" disabled class="btn delete-button">
+                      <i class="material-icons icon-current-theme">done</i>
+                      {{ 'Used theme'|trans({}, 'Admin.Design.Feature') }}
                     </button>
-                  </form>
+                  {% endif %}
                 {% endblock %}
               {% endembed %}
             {% endfor %}

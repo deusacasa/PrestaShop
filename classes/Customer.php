@@ -242,7 +242,7 @@ class CustomerCore extends ObjectModel
         $this->last_passwd_gen = date('Y-m-d H:i:s', strtotime('-' . Configuration::get('PS_PASSWD_TIME_FRONT') . 'minutes'));
 
         // If subscribed to the newsletter, set the date of subscription to now, if not set
-        if ($this->newsletter && !Validate::isDate($this->newsletter_date_add)) {
+        if ($this->newsletter && !Validate::isDate((string) $this->newsletter_date_add)) {
             $this->newsletter_date_add = date('Y-m-d H:i:s');
         }
 
@@ -1069,6 +1069,8 @@ class CustomerCore extends ObjectModel
      */
     public function cleanGroups()
     {
+        unset(self::$_customer_groups[(int) $this->id]);
+
         return Db::getInstance()->delete('customer_group', 'id_customer = ' . (int) $this->id);
     }
 
@@ -1084,6 +1086,7 @@ class CustomerCore extends ObjectModel
             $row = ['id_customer' => (int) $this->id, 'id_group' => (int) $group];
             Db::getInstance()->insert('customer_group', $row, false, true, Db::INSERT_IGNORE);
         }
+        unset(self::$_customer_groups[(int) $this->id]);
     }
 
     /**
@@ -1099,8 +1102,8 @@ class CustomerCore extends ObjectModel
             return [Configuration::get('PS_CUSTOMER_GROUP')];
         }
 
-        if ($idCustomer == 0) {
-            self::$_customer_groups[$idCustomer] = [(int) Configuration::get('PS_UNIDENTIFIED_GROUP')];
+        if (empty($idCustomer)) {
+            return [(int) Configuration::get('PS_UNIDENTIFIED_GROUP')];
         }
 
         if (!isset(self::$_customer_groups[$idCustomer])) {
@@ -1520,8 +1523,7 @@ class CustomerCore extends ObjectModel
      */
     public function stampResetPasswordToken()
     {
-        $salt = $this->id . '-' . $this->secure_key;
-        $this->reset_password_token = sha1(time() . $salt);
+        $this->reset_password_token = bin2hex(random_bytes(20));
         $validity = (int) Configuration::get('PS_PASSWD_RESET_VALIDITY') ?: 1440;
         $this->reset_password_validity = date('Y-m-d H:i:s', strtotime('+' . $validity . ' minutes'));
     }

@@ -34,6 +34,8 @@ class ObjectPresenter implements PresenterInterface
         }
 
         $presentedObject['id'] = $object->id;
+        // Lazy ExtraPropertiesBag — values are only read from DB on first access (FO-context filtered).
+        $presentedObject['extra_properties'] = $object->extra_properties;
 
         Hook::exec('actionPresentObject', ['presentedObject' => &$presentedObject, 'table' => $object::$definition['table']]);
 
@@ -46,7 +48,7 @@ class ObjectPresenter implements PresenterInterface
      * Execute filterHtml hook for html Content for objectPresenter.
      *
      * @param string $type
-     * @param ObjectModel $presentedObject
+     * @param array $presentedObject
      * @param array $htmlFields
      */
     private function filterHtmlContent($type, &$presentedObject, $htmlFields)

@@ -441,7 +441,6 @@ class AdminCarriersControllerCore extends AdminController
                                 throw new PrestaShopException('Cannot load Carrier object');
                             }
 
-                            /** @var Carrier $new_carrier */
                             // Duplicate current Carrier
                             $new_carrier = $current_carrier->duplicateObject();
                             if (Validate::isLoadedObject($new_carrier)) {
@@ -481,7 +480,7 @@ class AdminCarriersControllerCore extends AdminController
                         // Create new Carrier
                         $carrier = new Carrier();
                         $this->copyFromPost($carrier, $this->table);
-                        $carrier->position = Carrier::getHigherPosition() + 1;
+                        $carrier->position = Carrier::getHighestPosition() + 1;
                         if ($carrier->add()) {
                             if (($_POST['id_' . $this->table] = $carrier->id /* voluntary */) && $this->postImage($carrier->id) && $this->_redirect) {
                                 $carrier->setTaxRulesGroup((int) Tools::getValue('id_tax_rules_group'), true);

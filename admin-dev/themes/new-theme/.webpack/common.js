@@ -36,12 +36,39 @@ const FontPreloadPlugin = require('webpack-font-preload-plugin');
 const CssoWebpackPlugin = require('csso-webpack-plugin').default;
 
 module.exports = {
+  // Webpack 5 defaults to no cache at all in production, so every `npm run build`
+  // recompiled and re-minified the whole tree from scratch. Persisting it between runs
+  // is the bulk of this theme's build time.
+  //
+  // cacheDirectory is deliberately left at its default, node_modules/.cache/webpack:
+  // `npm ci` wipes it along with the dependencies it was built against, and the release
+  // packager already excludes node_modules from the shipped archive.
+  cache: {
+    type: 'filesystem',
+    // Default maxAge is 60 days, which lets packs from long-gone branches pile up
+    // (dev and prod keep separate caches, so the directory grows twice as fast).
+    // A week is plenty to cover day-to-day work.
+    maxAge: 7 * 24 * 60 * 60 * 1000,
+    buildDependencies: {
+      // webpack.config.js requires prod.js/dev.js, which require this file; webpack
+      // hashes each entry together with its dependencies, so it covers all three.
+      //
+      // tsconfig.json is listed separately: esbuild-loader reads it directly and never
+      // calls addDependency, so without this a change to compilerOptions would leave
+      // every cached TypeScript module valid and silently produce a stale build.
+      config: [
+        path.resolve(__dirname, '../webpack.config.js'),
+        path.resolve(__dirname, '../tsconfig.json'),
+      ],
+    },
+  },
   externals: {
     jquery: 'jQuery',
   },
   entry: {
     address: './js/pages/address',
     alias_form: './js/pages/alias/form',
+    administration: './js/pages/administration',
     api_client: './js/pages/api-client',
     api_client_form: './js/pages/api-client/form',
     attachment: './js/pages/attachment',
@@ -50,6 +77,8 @@ module.exports = {
     attribute_group: './js/pages/attribute-group',
     attribute_group_form: './js/pages/attribute-group/form',
     backup: './js/pages/backup',
+    business_entity: './js/pages/business-entity',
+    business_entity_form: './js/pages/business-entity/form',
     carrier: './js/pages/carrier',
     carrier_form: './js/pages/carrier/form',
     cart: './js/pages/cart',
@@ -61,6 +90,7 @@ module.exports = {
     catalog_product: './js/pages/catalog/product',
     category: './js/pages/category',
     category_edit: './js/pages/category/edit',
+    chartjs: './js/libs/chartjs',
     cldr: './js/app/cldr',
     cms_page: './js/pages/cms-page',
     cms_page_form: './js/pages/cms-page/form',
@@ -86,9 +116,13 @@ module.exports = {
     discount: './js/pages/discount',
     discount_form: './js/pages/discount/form',
     email: './js/pages/email',
+    email_body_translation: './js/pages/email-body-translation',
+    email_body_translation_form: './js/pages/email-body-translation/form',
     employee: './js/pages/employee/index',
     employee_form: './js/pages/employee/form',
     error: './js/pages/error',
+    extra_property_definition: './js/pages/extra-property-definition',
+    extra_property_definition_form: './js/pages/extra-property-definition/form',
     feature: './js/pages/feature',
     feature_flag: './js/pages/feature-flag/index',
     feature_form: './js/pages/feature/form',
@@ -110,7 +144,8 @@ module.exports = {
     maintenance: './js/pages/maintenance',
     manufacturer: './js/pages/manufacturer',
     manufacturer_address_form: './js/pages/manufacturer/manufacturer_address_form',
-    merchandise_return: './js/pages/merchandise-return',
+    order_return: './js/pages/order-return',
+    order_return_form: './js/pages/order-return/form',
     meta: './js/pages/meta',
     module: './js/pages/module',
     module_card: './js/app/pages/module-card',
@@ -150,16 +185,19 @@ module.exports = {
     shipping_preferences: './js/pages/shipping-preferences',
     specific_price_form: './js/pages/product/specific-price/form',
     sql_manager: './js/pages/sql-manager',
+    quick_access: './js/pages/quick-access',
     state: './js/pages/state',
     stock: './js/app/pages/stock',
     stock_page: './scss/pages/stock/stock_page.scss',
     store: './js/pages/store',
+    store_form: './js/pages/store/form',
     supplier: './js/pages/supplier',
     supplier_form: './js/pages/supplier/supplier-form',
     tag: './js/pages/tag',
     tag_form: './js/pages/tag/form',
     tax: './js/pages/tax',
     tax_rules: './js/pages/tax-rules',
+    tax_rules_form: './js/pages/tax-rules/form',
     tax_rules_group: './js/pages/tax-rules-group',
     theme: './scss/theme.scss',
     themes: './js/pages/themes',

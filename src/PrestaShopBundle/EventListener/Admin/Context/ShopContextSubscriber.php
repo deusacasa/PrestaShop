@@ -15,6 +15,7 @@ use PrestaShop\PrestaShop\Core\Context\ShopContextBuilder;
 use PrestaShop\PrestaShop\Core\Domain\Configuration\ShopConfigurationInterface;
 use PrestaShop\PrestaShop\Core\Domain\Shop\Exception\ShopException;
 use PrestaShop\PrestaShop\Core\Domain\Shop\ValueObject\ShopConstraint;
+use PrestaShop\PrestaShop\Core\Shop\ShopListResolverInterface;
 use PrestaShop\PrestaShop\Core\Util\Url\UrlCleaner;
 use PrestaShopBundle\Controller\Attribute\AllShopContext;
 use PrestaShopBundle\Routing\LegacyControllerConstants;
@@ -29,7 +30,7 @@ use Symfony\Component\HttpFoundation\Session\FlashBagAwareSessionInterface;
 use Symfony\Component\HttpKernel\Event\RequestEvent;
 use Symfony\Component\HttpKernel\KernelEvents;
 use Symfony\Component\Routing\Exception\NoConfigurationException;
-use Symfony\Component\Routing\RouterInterface;
+use Symfony\Component\Routing\Matcher\RequestMatcherInterface;
 use Symfony\Component\Security\Core\Event\AuthenticationSuccessEvent;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
@@ -53,10 +54,11 @@ class ShopContextSubscriber implements EventSubscriberInterface
         private readonly EmployeeContext $employeeContext,
         private readonly ShopConfigurationInterface $configuration,
         private readonly MultistoreFeature $multistoreFeature,
-        private readonly RouterInterface $router,
+        private readonly RequestMatcherInterface $router,
         private readonly Security $security,
         private readonly LegacyContext $legacyContext,
         private readonly TranslatorInterface $translator,
+        private readonly ShopListResolverInterface $shopListResolver,
     ) {
     }
 
@@ -143,9 +145,15 @@ class ShopContextSubscriber implements EventSubscriberInterface
         // Now we are sure the shop constraint is valid and we can initialize the ShopContext
         $this->shopContextBuilder->setShopConstraint($shopConstraint);
 
-        // Always set a shop ID for the context
-        $shopId = $shopConstraint->getShopId() ? $shopConstraint->getShopId()->getValue() : $this->getConfiguredDefaultShopId();
-        $this->shopContextBuilder->setShopId($shopId);
+        // Always set a shop ID for the context, and one that belongs to the constraint's
+        // scope: the default shop is only used when it is part of that scope (a shop group
+        // may not contain it), otherwise the scope's lowest shop id is used. Every
+        // ShopContext::getId() consumer (grids, forms, extra properties…) then reads an
+        // in-scope shop.
+        $representativeShopId = $this->shopListResolver->resolveRepresentativeShopId($shopConstraint);
+        $this->shopContextBuilder->setShopId(
+            $representativeShopId > 0 ? $representativeShopId : $this->getConfiguredDefaultShopId()
+        );
 
         // Set shop constraint as request attribute
         $request->attributes->set('shopConstraint', $shopConstraint);
@@ -351,9 +359,19 @@ class ShopContextSubscriber implements EventSubscriberInterface
     private function getShopConstraintFromRouteAttribute(Request $request): ?ShopConstraint
     {
         try {
-            $routeInfo = $this->router->match($request->getPathInfo());
-            $controller = $routeInfo['_controller'];
-            [$className, $methodName] = explode('::', $controller);
+            $controller = $request->attributes->get('_controller');
+            if (empty($controller)) {
+                // If the attribute is not present yet we handle the matching ourselves and get the controller via routing info
+                $routeInfo = $this->router->matchRequest($request);
+                $controller = $routeInfo['_controller'];
+            }
+            $controllerParts = explode('::', $controller);
+            if (2 !== count($controllerParts)) {
+                // Invokable or service-id controllers (e.g. the API Platform docs action) have no
+                // "Class::method" form, so they cannot declare the AllShopContext attribute this way. (#39468)
+                return null;
+            }
+            [$className, $methodName] = $controllerParts;
 
             $reflectionClass = new ReflectionClass($className);
             $classAttributes = $reflectionClass->getAttributes(AllShopContext::class);

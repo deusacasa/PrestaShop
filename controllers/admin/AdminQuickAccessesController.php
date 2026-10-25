@@ -3,10 +3,6 @@
  * For the full copyright and license information, please view the
  * docs/licenses/LICENSE.txt file that was distributed with this source code.
  */
-
-/**
- * @property QuickAccess $object
- */
 class AdminQuickAccessesControllerCore extends AdminController
 {
     public function __construct()
@@ -18,6 +14,10 @@ class AdminQuickAccessesControllerCore extends AdminController
 
         $this->addRowAction('edit');
         $this->addRowAction('delete');
+
+        // list_content.tpl uses $tr.link as the row onclick URL when present; quick access links
+        // have no token so row-click would redirect to security/compromised. Use Edit action instead.
+        $this->list_no_link = true;
 
         parent::__construct();
 
@@ -156,7 +156,7 @@ class AdminQuickAccessesControllerCore extends AdminController
             }
             $this->beforeAdd($this->object);
 
-            if (method_exists($this->object, 'add') && !$this->object->add()) {
+            if (!$this->object->add()) {
                 $this->errors[] = $this->trans('An error occurred while creating an object.', [], 'Admin.Notifications.Error') .
                     ' <b>' . $this->table . ' (' . Db::getInstance()->getMsgError() . ')</b>';
             } elseif (($_POST[$this->identifier] = $this->object->id) && $this->postImage($this->object->id) && empty($this->errors) && $this->_redirect) {
@@ -187,7 +187,7 @@ class AdminQuickAccessesControllerCore extends AdminController
     public function ajaxProcessGetUrl()
     {
         if (Tools::strtolower(Tools::getValue('method')) === 'add') {
-            $params['new_window'] = 0;
+            $params['new_window'] = (int) Tools::getValue('new_window', 0);
             $params['name_' . (int) Configuration::get('PS_LANG_DEFAULT')] = Tools::getValue('name');
             $params['link'] = Tools::getValue('url');
             $params['submitAddquick_access'] = 1;

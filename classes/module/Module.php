@@ -13,6 +13,9 @@ use PrestaShop\PrestaShop\Adapter\Module\Repository\ModuleRepository;
 use PrestaShop\PrestaShop\Adapter\ServiceLocator;
 use PrestaShop\PrestaShop\Core\Context\LegacyControllerContext;
 use PrestaShop\PrestaShop\Core\Exception\ContainerNotFoundException;
+use PrestaShop\PrestaShop\Core\ExtraProperty\Definition\ExtraPropertyDefinition;
+use PrestaShop\PrestaShop\Core\ExtraProperty\Definition\ExtraPropertyRegistryInterface;
+use PrestaShop\PrestaShop\Core\ExtraProperty\Exception\ExtraPropertyException;
 use PrestaShop\PrestaShop\Core\Foundation\Filesystem\FileSystem;
 use PrestaShop\PrestaShop\Core\Module\Legacy\ModuleInterface;
 use PrestaShop\PrestaShop\Core\Module\ModuleOverrideChecker;
@@ -416,19 +419,23 @@ abstract class ModuleCore implements ModuleInterface
         }
 
         // Check for override conflicts
-        $moduleOverrideChecker = $this->get(ModuleOverrideChecker::class);
-        if (!$moduleOverrideChecker) {
-            $moduleOverrideChecker = new ModuleOverrideChecker($this->getTranslator(), _PS_OVERRIDE_DIR_);
-        }
-        if ($moduleOverrideChecker->hasOverrideConflict($this->getLocalPath() . 'override')) {
-            $this->_errors = array_merge($moduleOverrideChecker->getErrors(), $this->_errors);
+        if (!Configuration::get('PS_DISABLE_MODULE_OVERRIDES')) {
+            $moduleOverrideChecker = $this->get(ModuleOverrideChecker::class);
+            if (!$moduleOverrideChecker) {
+                $moduleOverrideChecker = new ModuleOverrideChecker($this->getTranslator(), _PS_OVERRIDE_DIR_);
+            }
+            if ($moduleOverrideChecker->hasOverrideConflict($this->getLocalPath() . 'override')) {
+                $this->_errors = array_merge($moduleOverrideChecker->getErrors(), $this->_errors);
 
-            return false;
+                return false;
+            }
         }
 
         if (!$this->installControllers()) {
             $this->_errors[] = Context::getContext()->getTranslator()->trans('Could not install module controllers.', [], 'Admin.Modules.Notification');
-            $this->uninstallOverrides();
+            if (!Configuration::get('PS_DISABLE_MODULE_OVERRIDES')) {
+                $this->uninstallOverrides();
+            }
 
             return false;
         }
@@ -444,7 +451,9 @@ abstract class ModuleCore implements ModuleInterface
             if (method_exists($this, 'uninstallTabs')) {
                 $this->uninstallTabs();
             }
-            $this->uninstallOverrides();
+            if (!Configuration::get('PS_DISABLE_MODULE_OVERRIDES')) {
+                $this->uninstallOverrides();
+            }
 
             return false;
         }
@@ -903,7 +912,7 @@ abstract class ModuleCore implements ModuleInterface
         }
 
         // Uninstall all overrides this module may have used
-        if (!$this->uninstallOverrides()) {
+        if (!Configuration::get('PS_DISABLE_MODULE_OVERRIDES') && !$this->uninstallOverrides()) {
             return false;
         }
 
@@ -1031,8 +1040,7 @@ abstract class ModuleCore implements ModuleInterface
         if (!$moduleOverrideChecker) {
             $moduleOverrideChecker = new ModuleOverrideChecker($this->getTranslator(), _PS_OVERRIDE_DIR_);
         }
-
-        if ($this->getOverrides() != null) {
+        if ($this->getOverrides() != null && !Configuration::get('PS_DISABLE_MODULE_OVERRIDES')) {
             if (!$moduleOverrideChecker->hasOverrideConflict($this->getLocalPath() . 'override')) {
                 // Install overrides
                 try {
@@ -1170,7 +1178,7 @@ abstract class ModuleCore implements ModuleInterface
         Hook::exec('actionModuleDisable', ['module' => $this]);
 
         $result = true;
-        if ($this->getOverrides() != null) {
+        if (!Configuration::get('PS_DISABLE_MODULE_OVERRIDES') && $this->getOverrides() != null) {
             $result &= $this->uninstallOverrides();
         }
 
@@ -1218,6 +1226,81 @@ abstract class ModuleCore implements ModuleInterface
     public function unregisterHook($hook_id, $shop_list = null)
     {
         return Hook::unregisterHook($this, $hook_id, $shop_list);
+    }
+
+    /**
+     * Register or update an extra property definition for an entity.
+     *
+     * The definition must have entityName and propertyName set.
+     * The module name is automatically filled in from $this->name when $definition->getModuleName() is null.
+     *
+     * About BO label translations: store wording/domain pairs in the definition, and also call
+     * $this->trans() in the module code so strings are discoverable by the BO translation UI.
+     *
+     * A failure returns false and adds its reason to the module errors, so install code can
+     * simply test the returned value like it does for every other register* method. A failed
+     * registration persists nothing (no definition row, no column). Registry failures are also
+     * logged. Handle the reason codes of ExtraPropertyRegistryException by calling
+     * ExtraPropertyRegistryInterface::register() directly instead.
+     *
+     * @param ExtraPropertyDefinition $definition definition
+     *
+     * @return bool false on any failure: scope conflict, destructive schema change, invalid form
+     *              options, missing base table, DDL or persistence failure
+     */
+    public function registerExtraProperty(ExtraPropertyDefinition $definition): bool
+    {
+        // Inject the calling module's name when the developer did not explicitly set it.
+        if (null === $definition->getModuleName() && !empty($this->name)) {
+            $definition = $definition->withModuleName($this->name);
+        }
+
+        /** @var ExtraPropertyRegistryInterface $entityCustomFieldRegistry */
+        $entityCustomFieldRegistry = $this->get(ExtraPropertyRegistryInterface::class);
+
+        try {
+            $entityCustomFieldRegistry->register($definition);
+        } catch (ExtraPropertyException $e) {
+            // The registry logged the reason already; carry it to whatever displays module errors
+            // (the module manager, and the shop installer through ModuleManager::getError()).
+            $this->_errors[] = $e->getMessage();
+
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Unregister an extra property definition from the registry table.
+     *
+     * Pass the same ExtraPropertyDefinition used when registering. The module name is injected
+     * automatically when $definition->getModuleName() is null, mirroring registerExtraProperty().
+     *
+     * @param ExtraPropertyDefinition $definition Definition identifying the property to unregister
+     * @param bool $dropData If true, also DROP the SQL column and its data from the *_extra table
+     *
+     * @return bool false when deleting the definition row or dropping the column fails, the reason
+     *              being added to the module errors (no-op, and true, when nothing is registered)
+     */
+    public function unregisterExtraProperty(ExtraPropertyDefinition $definition, bool $dropData = false): bool
+    {
+        if (null === $definition->getModuleName() && !empty($this->name)) {
+            $definition = $definition->withModuleName($this->name);
+        }
+
+        /** @var ExtraPropertyRegistryInterface $entityCustomFieldRegistry */
+        $entityCustomFieldRegistry = $this->get(ExtraPropertyRegistryInterface::class);
+
+        try {
+            $entityCustomFieldRegistry->unregister($definition, $dropData);
+        } catch (ExtraPropertyException $e) {
+            $this->_errors[] = $e->getMessage();
+
+            return false;
+        }
+
+        return true;
     }
 
     /**
@@ -3055,7 +3138,7 @@ abstract class ModuleCore implements ModuleInterface
                     throw new Exception(Context::getContext()->getTranslator()->trans('The constant %1$s in the class %2$s is already defined.', [$constant, $classname], 'Admin.Modules.Notification'));
                 }
 
-                $module_file = preg_replace('/(const\s)\s*(\b' . $constant . '\b)/ism', "/*\n    * module: " . $this->name . "\n    * date: " . date('Y-m-d H:i:s') . "\n    * version: " . $this->version . "\n    */\n    $1$2", $module_file);
+                $module_file = preg_replace('/((?:public|private|protected)\s+)?(?:static\s+)?(const\s)\s*(\b' . $constant . '\b)/ism', "/*\n    * module: " . $this->name . "\n    * date: " . date('Y-m-d H:i:s') . "\n    * version: " . $this->version . "\n    */\n    $1$2$3", $module_file);
                 if ($module_file === null) {
                     throw new Exception(Context::getContext()->getTranslator()->trans('Failed to override constant %1$s in class %2$s.', [$constant, $classname], 'Admin.Modules.Notification'));
                 }
@@ -3119,7 +3202,7 @@ abstract class ModuleCore implements ModuleInterface
 
                 // Same loop for constants
                 foreach ($module_class->getConstants() as $constant => $value) {
-                    $module_file = preg_replace('/(const\s)\s*(\b' . $constant . '\b)/ism', "/*\n    * module: " . $this->name . "\n    * date: " . date('Y-m-d H:i:s') . "\n    * version: " . $this->version . "\n    */\n    $1$2", $module_file);
+                    $module_file = preg_replace('/((?:public|private|protected)\s+)?(?:static\s+)?(const\s)\s*(\b' . $constant . '\b)/ism', "/*\n    * module: " . $this->name . "\n    * date: " . date('Y-m-d H:i:s') . "\n    * version: " . $this->version . "\n    */\n    $1$2$3", $module_file);
                     if ($module_file === null) {
                         throw new Exception(Context::getContext()->getTranslator()->trans('Failed to override constant %1$s in class %2$s.', [$constant, $classname], 'Admin.Modules.Notification'));
                     }
@@ -3276,34 +3359,64 @@ abstract class ModuleCore implements ModuleInterface
                     continue;
                 }
 
-                // Replace the declaration line by #--remove--#
+                // Replace all declaration lines by #--remove--#, tracking bracket depth
+                // to handle multi-line property values (e.g. arrays spanning multiple lines)
+                $inside_property = false;
+                $bracket_depth = 0;
                 foreach ($override_file as $line_number => &$line_content) {
-                    if (preg_match('/(public|private|protected)\s+(static\s+)?\s*(\w+\s+)?(\$)?' . $property->getName() . '/i', $line_content)) {
-                        if (preg_match('/\* module: (' . $this->name . ')/ism', $override_file[$line_number - 4])) {
-                            $override_file[$line_number - 5] = $override_file[$line_number - 4] = $override_file[$line_number - 3] = $override_file[$line_number - 2] = $override_file[$line_number - 1] = '#--remove--#';
+                    if (!$inside_property) {
+                        if (preg_match('/(public|private|protected)\s+(static\s+)?\s*(\w+\s+)?(\$)?' . $property->getName() . '/i', $line_content)) {
+                            if (preg_match('/\* module: (' . $this->name . ')/ism', $override_file[$line_number - 4])) {
+                                $override_file[$line_number - 5] = $override_file[$line_number - 4] = $override_file[$line_number - 3] = $override_file[$line_number - 2] = $override_file[$line_number - 1] = '#--remove--#';
+                            }
+                            $inside_property = true;
+                            $bracket_depth = 0;
                         }
+                    }
+
+                    if ($inside_property) {
+                        $bracket_depth += substr_count($line_content, '(') - substr_count($line_content, ')');
+                        $bracket_depth += substr_count($line_content, '[') - substr_count($line_content, ']');
+                        $is_end = ($bracket_depth <= 0 && false !== strpos($line_content, ';'));
                         $line_content = '#--remove--#';
 
-                        break;
+                        if ($is_end) {
+                            break;
+                        }
                     }
                 }
             }
 
-            // Remove properties from override file
+            // Remove constants from override file
             foreach ($module_class->getConstants() as $constant => $value) {
                 if (!$override_class->hasConstant($constant)) {
                     continue;
                 }
 
-                // Replace the declaration line by #--remove--#
+                // Replace all declaration lines by #--remove--#, tracking bracket depth
+                // to handle multi-line constant values (e.g. arrays spanning multiple lines)
+                $inside_constant = false;
+                $bracket_depth = 0;
                 foreach ($override_file as $line_number => &$line_content) {
-                    if (preg_match('/(const)\s+(static\s+)?(\$)?' . $constant . '/i', $line_content)) {
-                        if (preg_match('/\* module: (' . $this->name . ')/ism', $override_file[$line_number - 4])) {
-                            $override_file[$line_number - 5] = $override_file[$line_number - 4] = $override_file[$line_number - 3] = $override_file[$line_number - 2] = $override_file[$line_number - 1] = '#--remove--#';
+                    if (!$inside_constant) {
+                        if (preg_match('/(const)\s+(static\s+)?(\$)?' . $constant . '/i', $line_content)) {
+                            if (preg_match('/\* module: (' . $this->name . ')/ism', $override_file[$line_number - 4])) {
+                                $override_file[$line_number - 5] = $override_file[$line_number - 4] = $override_file[$line_number - 3] = $override_file[$line_number - 2] = $override_file[$line_number - 1] = '#--remove--#';
+                            }
+                            $inside_constant = true;
+                            $bracket_depth = 0;
                         }
+                    }
+
+                    if ($inside_constant) {
+                        $bracket_depth += substr_count($line_content, '(') - substr_count($line_content, ')');
+                        $bracket_depth += substr_count($line_content, '[') - substr_count($line_content, ']');
+                        $is_end = ($bracket_depth <= 0 && false !== strpos($line_content, ';'));
                         $line_content = '#--remove--#';
 
-                        break;
+                        if ($is_end) {
+                            break;
+                        }
                     }
                 }
             }

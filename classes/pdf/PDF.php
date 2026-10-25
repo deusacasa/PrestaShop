@@ -39,6 +39,7 @@ class PDFCore
     public const TEMPLATE_ORDER_RETURN = 'OrderReturn';
     public const TEMPLATE_ORDER_SLIP = 'OrderSlip';
     public const TEMPLATE_DELIVERY_SLIP = 'DeliverySlip';
+    public const TEMPLATE_SHIPMENT_DELIVERY_SLIP = 'ShipmentDeliverySlip';
 
     /** @deprecated since 9.0 and will be removed in 10.0 **/
     public const TEMPLATE_SUPPLY_ORDER_FORM = 'SupplyOrderForm';
@@ -166,7 +167,9 @@ class PDFCore
 
         $templateObjectFromModule = $this->getTemplateObjectFromModules($object, $this->smarty, $this->send_bulk_flag, $this->template);
 
-        if (false === $templateObjectFromModule && class_exists($class_name)) {
+        if (false !== $templateObjectFromModule) {
+            $class = $templateObjectFromModule;
+        } elseif (class_exists($class_name)) {
             // Some HTMLTemplateXYZ implementations won't use the third param but this is not a problem (no warning in PHP),
             // the third param is then ignored if not added to the method signature.
             $class = new $class_name($object, $this->smarty, $this->send_bulk_flag);

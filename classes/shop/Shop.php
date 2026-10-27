@@ -342,8 +342,10 @@ class ShopCore extends ObjectModel
                 $result = self::findShopByHost($host);
             }
 
+            $domain = null;
             $through = false;
             foreach ($result as $row) {
+                $domain ??= $row['domain'];
                 // An URL matching current shop was found
                 if (preg_match('#^' . preg_quote($row['uri'], '#') . '#i', $request_uri)) {
                     $through = true;
@@ -411,6 +413,9 @@ class ShopCore extends ObjectModel
             }
         } else {
             $shop = new Shop($id_shop);
+            if (Configuration::get('PS_ALLOW_WHITELABELS') !== false) {
+            	$shop->domain = $shop->domain_ssl = $domain;
+            }
             if (!Validate::isLoadedObject($shop) || !$shop->active) {
                 // No shop found ... too bad, let's redirect to default shop
                 $default_shop = new Shop((int) Configuration::get('PS_SHOP_DEFAULT'));
